@@ -613,7 +613,7 @@ onBeforeUnmount(() => {
   box-shadow:
     0 2rem 5rem rgba(46, 109, 225, 0.13),
     0 0.5rem 1.25rem rgba(46, 109, 225, 0.07);
-  min-height: 32rem;
+  min-height: 26rem;
   display: flex;
   align-items: center;
 }
@@ -664,11 +664,11 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 48rem;
+  max-width: 64rem;
   margin: 0 auto;
-  padding: 3rem 4rem;
+  padding: 2rem 4rem;
   display: grid;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .kicker {
@@ -677,7 +677,7 @@ onBeforeUnmount(() => {
   gap: 0.5rem;
   font-size: 0.75rem;
   font-weight: 900;
-  letter-spacing: 0.09rem;
+  letter-spacing: 0.18rem;
   text-transform: uppercase;
   color: var(--blue-1, #2f73ff);
 }
@@ -705,6 +705,7 @@ onBeforeUnmount(() => {
   font-size: clamp(1.8rem, 2.2vw + 1rem, 3rem);
   line-height: 1.25;
   font-weight: 950;
+  letter-spacing: 0.06em;
   color: var(--text-1, #13356f);
 }
 .h1-grd {
@@ -718,18 +719,20 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 1rem;
   line-height: 1.8;
+  letter-spacing: 0.04em;
   color: var(--text-2, #5878ad);
-  max-width: 42rem;
+  max-width: 52rem;
 }
 
 .hero-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 .htag {
   font-size: 0.71875rem;
   font-weight: 900;
+  letter-spacing: 0.08em;
   color: var(--text-2, #5878ad);
   padding: 0.3rem 0.6rem;
   border-radius: 999rem;
@@ -744,17 +747,17 @@ onBeforeUnmount(() => {
 .hero-btns {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: center;
 }
 
 .hero-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.5rem;
+  gap: 1rem;
 }
 .hst {
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   border-radius: 1.25rem;
   border: 0.0625rem solid rgba(255, 255, 255, 0.78);
   background: linear-gradient(
@@ -767,12 +770,14 @@ onBeforeUnmount(() => {
 .hst-v {
   font-size: 1.25rem;
   font-weight: 950;
+  letter-spacing: 0.04em;
   color: var(--text-1, #13356f);
 }
 .hst-l {
   font-size: 0.8rem;
+  letter-spacing: 0.04em;
   color: var(--text-2, #5878ad);
-  margin-top: 0.3rem;
+  margin-top: 0.25rem;
   line-height: 1.5;
 }
 

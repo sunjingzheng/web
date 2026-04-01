@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import ChartsOverviewGrid from './components/charts/ChartsOverviewGrid.vue'
 
 const view = ref('chart')
+const inputOpen = ref(true)
 
 const curtainClass = ref('')
 let curtainTimer = null
@@ -124,6 +125,29 @@ function renderResultFrame(src, caption, isLarge = false) {
   `
 }
 
+const RESULT_SWAP_CLASSES = ['swap-2', 'swap-3', 'swap-4', 'swap-5']
+
+function clearResultSwapClasses(flex) {
+  RESULT_SWAP_CLASSES.forEach((c) => flex.classList.remove(c))
+}
+
+/** 互换布局不能用纯 CSS :hover：元素移动后指针会离开节点导致抖动，改为在 result-flex 上挂类 */
+function attachResultSwapInteraction() {
+  const flex = document.querySelector('.result-flex')
+  if (!flex) return
+
+  const onLeave = () => clearResultSwapClasses(flex)
+  flex.addEventListener('mouseleave', onLeave)
+
+  flex.querySelectorAll('.result-card.small').forEach((card, i) => {
+    const n = i + 2
+    card.addEventListener('mouseenter', () => {
+      clearResultSwapClasses(flex)
+      flex.classList.add(`swap-${n}`)
+    })
+  })
+}
+
 function syncAndPlayVideos() {
   const videos = Array.from(document.querySelectorAll('.auto-video'))
   videos.forEach((video) => {
@@ -153,11 +177,12 @@ function renderOutputs(scenario) {
   document.getElementById('resultGrid').innerHTML = `
     <div class="result-flex">
       <div class="result-main-col">${mainFrame}</div>
-      <div class="result-side-col">${smallFrames.join('')}</div>
+      ${smallFrames.join('')}
     </div>
   `
 
   syncAndPlayVideos()
+  attachResultSwapInteraction()
 }
 
 function renderMetricsTable(type = 'A1') {
@@ -326,51 +351,51 @@ onMounted(() => {
           </div>
         </section>
 
-        <div class="layout">
-          <aside class="panel input-panel">
+        <div class="layout" :class="{ 'input-collapsed': !inputOpen }">
+          <!-- 可折叠输入面板 -->
+          <aside class="panel input-panel" :class="{ collapsed: !inputOpen }">
             <div class="floating-orb orb-2"></div>
             <div class="panel-header">
               <h2 class="panel-title">参数设置</h2>
               <span class="panel-subtitle">参数控制台</span>
             </div>
 
-            <div class="input-grid">
-              <div class="field">
-                <label for="input1"
-                  >扰动频率参数
-                  <span class="field-hint">1.5 → A1 &nbsp;|&nbsp; 0.7 → A2</span></label
-                >
-                <input id="input1" type="text" placeholder="输入 1.5 或 0.7" />
-              </div>
-              <div class="field" id="bScenarioGroup">
-                <label>B 场景选择 <span class="field-hint">输入为空时生效</span></label>
-                <div class="radio-group" role="radiogroup" aria-label="B 场景选择">
-                  <label class="radio-item">
-                    <input id="radioB1" type="radio" name="bScenario" value="B1" checked />
-                    <span>B1 &nbsp;参数不确定</span>
-                  </label>
-                  <label class="radio-item">
-                    <input id="radioB2" type="radio" name="bScenario" value="B2" />
-                    <span>B2 &nbsp;噪声 + 不确定</span>
-                  </label>
+            <div class="input-body">
+              <div class="input-grid">
+                <div class="field">
+                  <label for="input1"
+                    >扰动频率参数
+                    <span class="field-hint">1.5 → A1 &nbsp;|&nbsp; 0.7 → A2</span></label
+                  >
+                  <input id="input1" type="text" placeholder="输入 1.5 或 0.7" />
+                </div>
+                <div class="field" id="bScenarioGroup">
+                  <label>B 场景选择 <span class="field-hint">输入为空时生效</span></label>
+                  <div class="radio-group" role="radiogroup" aria-label="B 场景选择">
+                    <label class="radio-item">
+                      <input id="radioB1" type="radio" name="bScenario" value="B1" checked />
+                      <span>B1 &nbsp;参数不确定</span>
+                    </label>
+                    <label class="radio-item">
+                      <input id="radioB2" type="radio" name="bScenario" value="B2" />
+                      <span>B2 &nbsp;噪声 + 不确定</span>
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="metrics-panel" id="metricsPanel">
-              <div class="metrics-header">
-                <strong>指标结果</strong>
-                <span id="metricsTitle" class="metrics-badge">A1</span>
+              <div class="actions">
+                <button class="btn btn-primary" type="button" @click="runPrediction">
+                  <span class="btn-icon">▶</span>开始预测
+                </button>
+                <button class="btn btn-secondary" type="button" @click="resetForm">重置</button>
               </div>
-              <div class="metrics-table-wrap" id="metricsContent"></div>
             </div>
 
-            <div class="actions">
-              <button class="btn btn-primary" type="button" @click="runPrediction">
-                <span class="btn-icon">▶</span>开始预测
-              </button>
-              <button class="btn btn-secondary" type="button" @click="resetForm">重置</button>
-            </div>
+            <!-- 折叠切换按钮 -->
+            <button class="collapse-btn" type="button" @click="inputOpen = !inputOpen" :title="inputOpen ? '收起参数面板' : '展开参数面板'">
+              <span class="collapse-icon">{{ inputOpen ? '‹' : '›' }}</span>
+            </button>
           </aside>
 
           <main class="panel output-panel">
@@ -381,6 +406,14 @@ onMounted(() => {
 
             <div class="output-body">
               <div id="resultGrid"></div>
+              <!-- 指标表格放在视频下方 -->
+              <div class="metrics-panel" id="metricsPanel">
+                <div class="metrics-header">
+                  <strong>指标结果</strong>
+                  <span id="metricsTitle" class="metrics-badge">A1</span>
+                </div>
+                <div class="metrics-table-wrap" id="metricsContent"></div>
+              </div>
             </div>
           </main>
         </div>
@@ -425,7 +458,8 @@ onMounted(() => {
   margin: 0 !important;
   text-align: left !important;
   border: 0 !important;
-  min-height: 100vh !important;
+  height: 100% !important;
+  min-height: 100% !important;
   display: block !important;
   box-sizing: border-box !important;
 }
@@ -438,6 +472,7 @@ html,
 body {
   margin: 0;
   height: 100%;
+  max-height: 100%;
   overflow: hidden;
   font-family: Inter, 'Microsoft YaHei', PingFang SC, system-ui, sans-serif;
   color: var(--text-1);
@@ -465,9 +500,10 @@ body::before {
 .app-root {
   height: 100%;
   min-height: 0;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
-  padding-top: 0.75rem;
+  padding-top: 0.5rem;
   box-sizing: border-box;
 }
 
@@ -506,8 +542,7 @@ body::before {
   width: min(96.25rem, calc(100vw - 1.75rem));
   flex: 1;
   min-height: 0;
-  height: auto;
-  margin: 0 auto 0.75rem;
+  margin: 0 auto;
   display: grid;
   grid-template-rows: var(--header-h) minmax(0, 1fr);
   gap: var(--gap);
@@ -692,8 +727,13 @@ body::before {
 .layout {
   min-height: 0;
   display: grid;
-  grid-template-columns: 22rem minmax(0, 1fr);
+  grid-template-columns: 18rem minmax(0, 1fr);
   gap: var(--gap);
+  transition: grid-template-columns 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.layout.input-collapsed {
+  grid-template-columns: 2.75rem minmax(0, 1fr);
 }
 
 .layout > .input-panel {
@@ -777,8 +817,23 @@ body::before {
   min-height: 0;
   overflow: hidden;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  align-content: stretch;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-content: start;
+  gap: 0;
+  position: relative;
+  transition: opacity 0.25s ease;
+}
+
+.input-panel.collapsed .input-body,
+.input-panel.collapsed .panel-header {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.input-body {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
   gap: 0;
 }
 
@@ -789,6 +844,40 @@ body::before {
   display: grid;
   gap: 0.625rem;
   align-content: start;
+}
+
+/* 折叠按钮 */
+.collapse-btn {
+  position: absolute;
+  right: -0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 1.75rem;
+  height: 3rem;
+  border-radius: 0 0.875rem 0.875rem 0;
+  border: 0.0625rem solid rgba(74, 129, 255, 0.22);
+  border-left: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(228,241,255,0.88));
+  box-shadow: 0.25rem 0 0.75rem rgba(47,115,255,0.12);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.collapse-btn:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,1), rgba(210,232,255,0.95));
+  box-shadow: 0.375rem 0 1rem rgba(47,115,255,0.22);
+}
+
+.collapse-icon {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--blue-1);
+  line-height: 1;
+  user-select: none;
 }
 
 .field {
@@ -869,23 +958,24 @@ body::before {
 .metrics-panel {
   position: relative;
   z-index: 1;
-  margin: 0.75rem 1rem 0;
-  min-height: 0;
-  border-radius: 1rem;
+  flex-shrink: 0;
+  border-radius: 0.875rem;
   border: 0.0625rem solid rgba(255, 255, 255, 0.66);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(240, 247, 255, 0.78));
   box-shadow: inset 0 0.0625rem 0 rgba(255, 255, 255, 0.55);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  max-height: min(10.5rem, 26vh);
 }
 
 .metrics-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem 0.4rem;
+  padding: 0.35rem 0.625rem 0.3rem;
   border-bottom: 0.0625rem solid rgba(57, 124, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .metrics-header strong {
@@ -906,28 +996,28 @@ body::before {
 }
 
 .metrics-table-wrap {
-  padding: 0.5rem 0.625rem 0.625rem;
   flex: 1;
-  min-height: 0;
+  padding: 0.3rem 0.5rem 0.4rem;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  min-height: 0;
 }
 
 .metrics-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   color: var(--text-1);
 }
 
 .metrics-table th,
 .metrics-table td {
   border: 0.0625rem solid rgba(57, 124, 255, 0.1);
-  padding: 0.4375rem 0.375rem;
+  padding: 0.28rem 0.3rem;
   text-align: center;
   background: rgba(255, 255, 255, 0.46);
-  line-height: 1.2;
+  line-height: 1.15;
   word-break: break-word;
 }
 
@@ -1004,6 +1094,7 @@ body::before {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.625rem;
+  align-self: end;
 }
 
 .btn {
@@ -1052,50 +1143,118 @@ body::before {
 .output-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  padding-bottom: 0.875rem;
+  padding-bottom: 0.5rem;
+  min-height: 0;
+}
+
+.output-panel .panel-header {
+  padding-top: 0.75rem;
 }
 
 .output-body {
   position: relative;
   z-index: 1;
-  padding: 0.625rem 0.875rem 0;
+  padding: 0.5rem 0.75rem 0;
   min-height: 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  overflow: hidden;
 }
 
 /* ── Result Grid ── */
 #resultGrid {
   min-height: 0;
-  height: 100%;
+  flex: 1;
+  overflow: hidden;
 }
 
-/* 左侧大图 + 右侧 2×2 小图，完全撑满容器 */
+/* 左侧大图 + 右侧 2×2 四张小图（Grid）；移入某小图时与主列互换（由 JS 挂 swap-* 类，避免 :hover 抖动） */
 .result-flex {
+  --rf-gap: 0.5rem;
   min-height: 0;
   height: 100%;
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.5fr) minmax(0, 0.5fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--rf-gap);
   align-items: stretch;
-  gap: 0.625rem;
+  position: relative;
 }
 
 .result-main-col {
-  flex: 1.2;
+  grid-column: 1;
+  grid-row: 1 / -1;
   min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  z-index: 1;
 }
 
-.result-side-col {
+.result-main-col .result-card {
   flex: 1;
-  min-width: 0;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 0.5rem;
-  align-content: stretch;
+}
+
+/* 四张小图默认占右侧 2×2 */
+.result-flex > .result-card.small:nth-child(2) {
+  grid-column: 2;
+  grid-row: 1;
+}
+.result-flex > .result-card.small:nth-child(3) {
+  grid-column: 3;
+  grid-row: 1;
+}
+.result-flex > .result-card.small:nth-child(4) {
+  grid-column: 2;
+  grid-row: 2;
+}
+.result-flex > .result-card.small:nth-child(5) {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+/* 由 .swap-2 … .swap-5 控制互换（见 attachResultSwapInteraction） */
+.result-flex.swap-2 > .result-card.small:nth-child(2) {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  box-shadow: 0 1.25rem 3rem rgba(47, 115, 255, 0.22);
+}
+.result-flex.swap-2 .result-main-col {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.result-flex.swap-3 > .result-card.small:nth-child(3) {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  box-shadow: 0 1.25rem 3rem rgba(47, 115, 255, 0.22);
+}
+.result-flex.swap-3 .result-main-col {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.result-flex.swap-4 > .result-card.small:nth-child(4) {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  box-shadow: 0 1.25rem 3rem rgba(47, 115, 255, 0.22);
+}
+.result-flex.swap-4 .result-main-col {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.result-flex.swap-5 > .result-card.small:nth-child(5) {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  box-shadow: 0 1.25rem 3rem rgba(47, 115, 255, 0.22);
+}
+.result-flex.swap-5 .result-main-col {
+  grid-column: 3;
+  grid-row: 2;
 }
 
 .result-card {
@@ -1105,12 +1264,31 @@ body::before {
   border: 0.0625rem solid rgba(255, 255, 255, 0.68);
   background: linear-gradient(180deg, rgba(248, 252, 255, 0.92), rgba(229, 242, 255, 0.84));
   box-shadow: 0 0.5rem 1.5rem rgba(67, 116, 212, 0.1);
-  padding: 0.3rem 0.4rem 0.4rem;
+  padding: 0.3rem 0.4rem 0.25rem;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  gap: 0.15rem;
+  transition: box-shadow 0.28s ease, transform 0.28s ease;
+}
+
+.result-flex > .result-card.small {
+  transition: box-shadow 0.28s ease;
+}
+
+.result-flex.swap-2 > .result-card.small:nth-child(2) .auto-video,
+.result-flex.swap-3 > .result-card.small:nth-child(3) .auto-video,
+.result-flex.swap-4 > .result-card.small:nth-child(4) .auto-video,
+.result-flex.swap-5 > .result-card.small:nth-child(5) .auto-video {
+  padding: 0.5rem;
+}
+
+.result-flex.swap-2 .result-main-col .auto-video,
+.result-flex.swap-3 .result-main-col .auto-video,
+.result-flex.swap-4 .result-main-col .auto-video,
+.result-flex.swap-5 .result-main-col .auto-video {
+  padding: 0.3rem;
 }
 
 .result-card::before {
@@ -1128,16 +1306,11 @@ body::before {
     radial-gradient(circle at top right, rgba(123, 231, 255, 0.24), transparent 26%);
 }
 
-.result-main-col .result-card {
-  flex: 1;
-  min-height: 0;
-}
-
-/* 鼠标悬停放大效果 */
-.result-card:hover {
+/* 大图轻微悬停；小图放大由 Grid 铺满主列完成，不再 scale */
+.result-card.large:hover {
   box-shadow: 0 1.25rem 3rem rgba(47, 115, 255, 0.2);
-  transform: scale(1.018);
-  z-index: 10;
+  transform: scale(1.012);
+  z-index: 2;
 }
 
 .result-caption {
@@ -1149,6 +1322,11 @@ body::before {
   line-height: 1.25;
   letter-spacing: 0.0125rem;
   padding: 0 0.125rem;
+}
+
+.result-card.small {
+  flex: 1;
+  min-height: 0;
 }
 
 .result-card.small .result-video-wrap {
@@ -1507,11 +1685,65 @@ body::before {
     grid-template-rows: auto auto;
   }
   .result-flex {
-    flex-direction: column;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(11rem, 34vh) minmax(0, 1fr) minmax(0, 1fr);
     height: auto;
+    min-height: min(28rem, 70vh);
+  }
+  .result-main-col {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .result-flex > .result-card.small:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .result-flex > .result-card.small:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .result-flex > .result-card.small:nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .result-flex > .result-card.small:nth-child(5) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .result-flex.swap-2 > .result-card.small:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .result-flex.swap-2 .result-main-col {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .result-flex.swap-3 > .result-card.small:nth-child(3) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .result-flex.swap-3 .result-main-col {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .result-flex.swap-4 > .result-card.small:nth-child(4) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .result-flex.swap-4 .result-main-col {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .result-flex.swap-5 > .result-card.small:nth-child(5) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .result-flex.swap-5 .result-main-col {
+    grid-column: 2;
+    grid-row: 3;
   }
   .result-main-col .result-card {
-    min-height: min(13.75rem, 36vh);
+    min-height: min(11rem, 34vh);
   }
 }
 
