@@ -8,7 +8,7 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
-import { barSurgeU, modelColorMap, modelNames, scenarios } from './chartData'
+import { barSurgeU, modelNames, scenarios } from './chartData'
 
 // 表A按你的要求：只展示四组（A1/A2/B1/B2）
 const scenariosA = scenarios.slice(1)
@@ -23,45 +23,71 @@ let chart = null
 function render() {
   if (!chart) return
 
+  const palette = ['#2f73ff', '#10b981', '#f472b6', '#f59e0b', '#8b5cf6']
+
   chart.setOption({
     backgroundColor: 'transparent',
-    grid: { top: 54, left: 44, right: 18, bottom: 42, containLabel: true },
+    grid: { top: 48, left: 16, right: 16, bottom: 56, containLabel: true },
     legend: {
-      bottom: 14,
+      bottom: 6,
       left: 'center',
       type: 'scroll',
-      textStyle: { fontSize: 12 },
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { fontSize: 11, color: '#5878ad' },
+      formatter: (name) => (name === '__zero__' ? '' : name),
     },
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    xAxis: { type: 'category', data: scenariosA },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: 'rgba(255,255,255,0.96)',
+      borderColor: 'rgba(47,115,255,0.18)',
+      textStyle: { color: '#13356f', fontSize: 12 },
+    },
+    xAxis: {
+      type: 'category',
+      data: scenariosA,
+      axisLine: { lineStyle: { color: 'rgba(88,120,173,0.25)' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#5878ad', fontWeight: 700, fontSize: 12 },
+    },
     yAxis: {
       type: 'value',
-      name: 'Residual Reduction (%)',
-      // 与截图一致的固定范围，保证柱高像素比例完全对齐
+      name: 'Reduction (%)',
+      nameTextStyle: { color: '#5878ad', fontSize: 11 },
       min: -100,
-      max: 20,
-      axisLabel: { formatter: '{value}' },
-      splitLine: { lineStyle: { color: 'rgba(0,0,0,0.06)' } },
+      max: 25,
+      axisLabel: { color: '#5878ad', fontSize: 11 },
+      splitLine: { lineStyle: { color: 'rgba(88,120,173,0.1)', type: 'dashed' } },
+      axisLine: { show: false },
+      axisTick: { show: false },
     },
     series: [
-      ...modelNames.map((name) => ({
+      ...modelNames.map((name, i) => ({
         name,
         type: 'bar',
-        // 与截图一致的柱宽设置，保证柱组在 x 轴分类处的显示比例一致
-        barWidth: '22%',
-        itemStyle: { color: modelColorMap[name] },
-        emphasis: { focus: 'series' },
+        barMaxWidth: 10,
+        barGap: '20%',
+        barCategoryGap: '40%',
+        itemStyle: {
+          color: palette[i],
+          borderRadius: [3, 3, 0, 0],
+        },
+        emphasis: {
+          focus: 'series',
+          itemStyle: { opacity: 0.85 },
+        },
         data: (barSurgeU[name] || []).slice(1).map((v) => (typeof v === 'number' ? v : Number(v))),
       })),
-      // 0 参考线：用 line series 确保始终显示在正确位置（虚线风格与截图一致）
       {
         name: '__zero__',
         type: 'line',
-        showInLegend: false,
+        silent: true,
+        legendHoverLink: false,
         data: scenariosA.map(() => 0),
         symbol: 'none',
         tooltip: { show: false },
-        lineStyle: { type: 'dashed', color: 'rgba(0,0,0,0.35)', width: 2 },
+        lineStyle: { type: 'dashed', color: 'rgba(88,120,173,0.45)', width: 1.5 },
         z: 1,
       },
     ],

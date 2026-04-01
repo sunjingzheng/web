@@ -4,6 +4,10 @@ import ChartsOverviewGrid from './components/charts/ChartsOverviewGrid.vue'
 
 const view = ref('chart')
 
+const curtainClass = ref('')
+let curtainTimer = null
+
+// 从图片中读取的真实数据
 const metricsTemplate = {
   A1: [
     ['RMS', '0.2981', '0.1921', '35.55%'],
@@ -13,32 +17,25 @@ const metricsTemplate = {
     ['τ_r RMS', '21.9155', '21.6048', '不变'],
   ],
   A2: [
-    ['RMS', '0.3124', '0.2056', '34.18%'],
-    ['后20s的RMS', '0.5289', '0.0512', '90.32%'],
-    ['收敛时间', '5.12', '5.08', '不变'],
-    ['τ_u RMS', '55.1023', '54.9011', '不变'],
-    ['τ_r RMS', '22.3401', '21.8890', '不变'],
+    ['RMS', '0.2614', '0.1919', '26.58%'],
+    ['后20s的RMS', '0.3829', '0.0330', '91.39%'],
+    ['收敛时间', '4.82', '4.84', '不变'],
+    ['τ_u RMS', '54.6987', '54.4918', '不变'],
+    ['τ_r RMS', '21.6852', '21.4406', '不变'],
   ],
   B1: [
-    ['RMS', '0.3310', '0.2188', '33.90%'],
-    ['后20s的RMS', '0.5412', '0.0589', '89.12%'],
-    ['收敛时间', '5.45', '5.40', '不变'],
-    ['τ_u RMS', '56.2240', '55.9901', '不变'],
-    ['τ_r RMS', '23.1188', '22.7602', '不变'],
+    ['RMS', '0.2612', '0.1919', '26.54%'],
+    ['后20s的RMS', '0.3824', '0.0325', '91.49%'],
+    ['收敛时间', '4.83', '4.84', '不变'],
+    ['τ_u RMS', '54.7101', '54.5036', '不变'],
+    ['τ_r RMS', '21.7668', '21.5257', '不变'],
   ],
   B2: [
-    ['RMS', '0.3456', '0.2301', '33.42%'],
-    ['后20s的RMS', '0.5598', '0.0624', '88.85%'],
-    ['收敛时间', '5.88', '5.82', '不变'],
-    ['τ_u RMS', '57.0012', '56.7123', '不变'],
-    ['τ_r RMS', '23.8891', '23.4505', '不变'],
-  ],
-  BASE: [
-    ['RMS', '0.2981', '—', '—'],
-    ['后20s的RMS', '0.5137', '—', '—'],
-    ['收敛时间', '4.75', '—', '—'],
-    ['τ_u RMS', '54.8411', '—', '—'],
-    ['τ_r RMS', '21.9155', '—', '—'],
+    ['RMS', '0.3169', '0.2412', '23.88%'],
+    ['后20s的RMS', '0.4746', '0.1748', '63.17%'],
+    ['收敛时间', '4.79', '4.81', '不变'],
+    ['τ_u RMS', '54.7282', '54.4880', '不变'],
+    ['τ_r RMS', '21.7878', '21.5149', '不变'],
   ],
 }
 
@@ -79,15 +76,6 @@ const scenarioVideoMap = {
       '/other/y_error_B2.mp4',
     ],
   },
-  BASE: {
-    main: '/main/USV_BASE.mp4',
-    subs: [
-      '/other/tau_r_BASE.mp4',
-      '/other/tau_u_BASE.mp4',
-      '/other/x_error_BASE.mp4',
-      '/other/y_error_BASE.mp4',
-    ],
-  },
 }
 
 let currentGroup = 0
@@ -101,8 +89,12 @@ const groupData = [1, 2, 3, 4, 5].map((n) => ({
   metrics: JSON.parse(JSON.stringify(metricsTemplate)),
 }))
 
+// 输入逻辑：1.5 → A1，0.7 → A2，空 → B1/B2
 function getScenarioFromInputs(inputs) {
-  if ((inputs.input1 || '').trim()) return 'A1'
+  const val = (inputs.input1 || '').trim()
+  if (val === '1.5') return 'A1'
+  if (val === '0.7') return 'A2'
+  if (val) return 'A1' // 其他非空值默认 A1
   return (inputs.bScenario || 'B1').toString()
 }
 
@@ -154,7 +146,9 @@ function syncAndPlayVideos() {
 function renderOutputs(scenario) {
   const output = groupData[currentGroup].outputs[scenario]
   const mainFrame = renderResultFrame(output.main, '轨迹对比', true)
-  const smallFrames = SUB_PANEL_ORDER.map((subIndex, i) => renderResultFrame(output.subs[subIndex], SUB_PANEL_LABELS[i], false))
+  const smallFrames = SUB_PANEL_ORDER.map((subIndex, i) =>
+    renderResultFrame(output.subs[subIndex], SUB_PANEL_LABELS[i], false),
+  )
 
   document.getElementById('resultGrid').innerHTML = `
     <div class="result-flex">
@@ -171,7 +165,8 @@ function renderMetricsTable(type = 'A1') {
   document.getElementById('metricsTitle').textContent = type
 
   if (!metrics.length) {
-    document.getElementById('metricsContent').innerHTML = '<div class="metrics-empty">当前参数暂无指标数据</div>'
+    document.getElementById('metricsContent').innerHTML =
+      '<div class="metrics-empty">当前参数暂无指标数据</div>'
     return
   }
 
@@ -182,9 +177,9 @@ function renderMetricsTable(type = 'A1') {
         <td class="metric-name">${row[0]}</td>
         <td>${row[1]}</td>
         <td>${row[2]}</td>
-        <td>${row[3]}</td>
+        <td class="metric-improve ${row[3] !== '不变' ? 'improve-good' : ''}">${row[3]}</td>
       </tr>
-    `
+    `,
     )
     .join('')
 
@@ -214,6 +209,15 @@ function renderLoadingState(type = 'A1') {
   `
 }
 
+function updateBScenarioVisibility() {
+  const val = (document.getElementById('input1')?.value || '').trim()
+  const bGroup = document.getElementById('bScenarioGroup')
+  if (bGroup) {
+    bGroup.style.opacity = val ? '0.38' : '1'
+    bGroup.style.pointerEvents = val ? 'none' : 'auto'
+  }
+}
+
 function fillInputs() {
   const inputs = groupData[currentGroup].inputs
   document.getElementById('input1').value = inputs.input1
@@ -223,6 +227,8 @@ function fillInputs() {
   const b2Radio = document.getElementById('radioB2')
   if (b1Radio) b1Radio.checked = isB1
   if (b2Radio) b2Radio.checked = !isB1
+
+  updateBScenarioVisibility()
 }
 
 function saveInputs() {
@@ -254,19 +260,34 @@ function resetForm() {
 
   document.getElementById('resultGrid').innerHTML = ''
   document.getElementById('metricsTitle').textContent = groupData[currentGroup].activeScenario
-  document.getElementById('metricsContent').innerHTML = '<div class="metrics-empty">等待预测结果...</div>'
+  document.getElementById('metricsContent').innerHTML =
+    '<div class="metrics-empty">等待预测结果...</div>'
 }
 
 function initPage() {
   fillInputs()
   document.getElementById('resultGrid').innerHTML = ''
   document.getElementById('metricsTitle').textContent = groupData[currentGroup].activeScenario
-  document.getElementById('metricsContent').innerHTML = '<div class="metrics-empty">等待预测结果...</div>'
+  document.getElementById('metricsContent').innerHTML =
+    '<div class="metrics-empty">等待预测结果...</div>'
+
+  // 监听 input1 变化以切换 B 场景的可用状态
+  const inp = document.getElementById('input1')
+  if (inp) inp.addEventListener('input', updateBScenarioVisibility)
 }
 
 function setView(next) {
-  view.value = next
-  document.body.style.overflow = next === 'demo' ? 'hidden' : 'auto'
+  if (view.value === next || curtainClass.value) return
+  clearTimeout(curtainTimer)
+  curtainClass.value = 'cv-in'
+  curtainTimer = setTimeout(() => {
+    view.value = next
+    document.body.style.overflow = next === 'demo' ? 'hidden' : 'auto'
+    curtainClass.value = 'cv-out'
+    curtainTimer = setTimeout(() => {
+      curtainClass.value = ''
+    }, 480)
+  }, 480)
 }
 
 onMounted(() => {
@@ -279,21 +300,29 @@ onMounted(() => {
   <div class="app-root">
     <div class="main-view" v-show="view === 'demo'">
       <div class="page">
-        <section class="hero">
-          <div class="floating-orb orb-1"></div>
-          <div class="hero-left">
-            <div class="hero-icon"></div>
-            <div class="hero-text">
-              <h1>无人艇轨迹跟踪演示</h1>
-              <p>演示界面</p>
-            </div>
+        <section class="demo-topbar">
+          <div class="dtb-l">
+            <div class="dtb-icon"></div>
+            <span class="dtb-title">无人艇轨迹跟踪<em class="dtb-sep">·</em>演示控制台</span>
+            <span class="dtb-live"><span class="dtb-pip"></span>LIVE</span>
           </div>
-          <div class="hero-right" aria-label="页面切换">
-            <div class="nav-links">
-              <button type="button" class="nav-item" :class="{ active: view === 'demo' }" @click="setView('demo')">轨迹跟踪演示</button>
-              <button type="button" class="nav-item" :class="{ active: view === 'chart' }" @click="setView('chart')">结果总览</button>
-            </div>
-            <div class="hero-badge">演示模式</div>
+          <div class="dtb-r">
+            <button
+              type="button"
+              class="nav-item"
+              :class="{ active: view === 'demo' }"
+              @click="setView('demo')"
+            >
+              轨迹跟踪演示
+            </button>
+            <button
+              type="button"
+              class="nav-item"
+              :class="{ active: view === 'chart' }"
+              @click="setView('chart')"
+            >
+              结果总览
+            </button>
           </div>
         </section>
 
@@ -307,19 +336,22 @@ onMounted(() => {
 
             <div class="input-grid">
               <div class="field">
-                <label for="input1">A1 高频扰动</label>
-                <input id="input1" type="text" placeholder="请输入参数" />
+                <label for="input1"
+                  >扰动频率参数
+                  <span class="field-hint">1.5 → A1 &nbsp;|&nbsp; 0.7 → A2</span></label
+                >
+                <input id="input1" type="text" placeholder="输入 1.5 或 0.7" />
               </div>
-              <div class="field">
-                <label>B 场景选择</label>
+              <div class="field" id="bScenarioGroup">
+                <label>B 场景选择 <span class="field-hint">输入为空时生效</span></label>
                 <div class="radio-group" role="radiogroup" aria-label="B 场景选择">
                   <label class="radio-item">
-                    <input id="radioB1" type="radio" name="bScenario" value="B1" />
-                    <span>B1 参数不确定</span>
+                    <input id="radioB1" type="radio" name="bScenario" value="B1" checked />
+                    <span>B1 &nbsp;参数不确定</span>
                   </label>
                   <label class="radio-item">
                     <input id="radioB2" type="radio" name="bScenario" value="B2" />
-                    <span>B2 噪声+不确定</span>
+                    <span>B2 &nbsp;噪声 + 不确定</span>
                   </label>
                 </div>
               </div>
@@ -328,13 +360,15 @@ onMounted(() => {
             <div class="metrics-panel" id="metricsPanel">
               <div class="metrics-header">
                 <strong>指标结果</strong>
-                <span id="metricsTitle">A1</span>
+                <span id="metricsTitle" class="metrics-badge">A1</span>
               </div>
               <div class="metrics-table-wrap" id="metricsContent"></div>
             </div>
 
             <div class="actions">
-              <button class="btn btn-primary" type="button" @click="runPrediction">开始预测</button>
+              <button class="btn btn-primary" type="button" @click="runPrediction">
+                <span class="btn-icon">▶</span>开始预测
+              </button>
               <button class="btn btn-secondary" type="button" @click="resetForm">重置</button>
             </div>
           </aside>
@@ -342,15 +376,11 @@ onMounted(() => {
           <main class="panel output-panel">
             <div class="panel-header">
               <h2 class="panel-title">结果展示</h2>
-              <span class="panel-subtitle">展示区</span>
+              <span class="panel-subtitle">可视化输出</span>
             </div>
 
             <div class="output-body">
-              <div class="section-head">
-                <h3>可视化输出</h3>
-                <span>轨迹与误差</span>
-              </div>
-              <div class="result-output" id="resultGrid"></div>
+              <div id="resultGrid"></div>
             </div>
           </main>
         </div>
@@ -360,6 +390,14 @@ onMounted(() => {
     <div class="main-view" v-show="view === 'chart'">
       <div class="chart-page">
         <ChartsOverviewGrid :active="view === 'chart'" @go-demo="setView('demo')" />
+      </div>
+    </div>
+
+    <!-- 页面切换幕帘 -->
+    <div class="view-curtain" :class="curtainClass" aria-hidden="true">
+      <div class="vc-body">
+        <div class="vc-icon"></div>
+        <span class="vc-text">USV · 轨迹跟踪</span>
       </div>
     </div>
   </div>
@@ -378,10 +416,9 @@ onMounted(() => {
   --shadow-lg: 0 1.5rem 4.375rem rgba(46, 109, 225, 0.14);
   --shadow-md: 0 0.875rem 2.125rem rgba(51, 101, 190, 0.1);
   --gap: 0.875rem;
-  --header-h: 4.875rem;
+  --header-h: 3.375rem;
 }
 
-/* 覆盖 Vite 模板里的 #app 尺寸限制，保证充满屏幕 */
 #app {
   width: 100% !important;
   max-width: none !important;
@@ -402,7 +439,7 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  font-family: Inter, "Microsoft YaHei", PingFang SC, system-ui, sans-serif;
+  font-family: Inter, 'Microsoft YaHei', PingFang SC, system-ui, sans-serif;
   color: var(--text-1);
   background: radial-gradient(circle at 12% 12%, rgba(73, 167, 255, 0.34), transparent 18%),
     radial-gradient(circle at 88% 10%, rgba(125, 230, 255, 0.26), transparent 18%),
@@ -415,7 +452,7 @@ html {
 }
 
 body::before {
-  content: "";
+  content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -432,11 +469,6 @@ body::before {
   flex-direction: column;
   padding-top: 0.75rem;
   box-sizing: border-box;
-}
-
-.nav-links {
-  display: flex;
-  gap: 0.5rem;
 }
 
 .nav-item {
@@ -481,133 +513,186 @@ body::before {
   gap: var(--gap);
 }
 
-.hero {
+/* ── Demo 顶栏 ── */
+.demo-topbar {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
-  border-radius: 1.375rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(234, 244, 255, 0.76)),
-    linear-gradient(90deg, rgba(47, 115, 255, 0.1), rgba(125, 230, 255, 0.12));
-  border: 0.0625rem solid rgba(255, 255, 255, 0.75);
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(1.125rem);
+  padding: 0 1.25rem;
+  border-radius: 1.125rem;
+  background: linear-gradient(
+    125deg,
+    rgba(8, 18, 55, 0.96) 0%,
+    rgba(14, 38, 116, 0.93) 50%,
+    rgba(20, 54, 160, 0.88) 100%
+  );
+  border: 0.0625rem solid rgba(47, 115, 255, 0.32);
+  box-shadow: 0 0.5rem 1.75rem rgba(8, 18, 55, 0.28),
+    inset 0 0.0625rem 0 rgba(73, 167, 255, 0.22);
+  backdrop-filter: blur(1rem);
   overflow: hidden;
 }
 
-.hero::before {
-  content: "";
+.demo-topbar::before {
+  content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(96deg, transparent 16%, rgba(255, 255, 255, 0.58) 40%, transparent 62%);
+  background: linear-gradient(
+    96deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.04) 48%,
+    transparent 66%
+  );
   transform: translateX(-120%);
-  animation: shine 7s linear infinite;
+  animation: shine 6s linear infinite;
   pointer-events: none;
 }
 
-.hero::after {
-  content: "";
+.demo-topbar::after {
+  content: '';
   position: absolute;
-  left: 1.5rem;
-  right: 1.5rem;
+  left: 0;
+  right: 0;
   bottom: 0;
-  height: 0.25rem;
-  border-radius: 999rem;
+  height: 0.125rem;
   background: linear-gradient(
     90deg,
-    rgba(47, 115, 255, 0.18),
-    rgba(73, 167, 255, 0.82),
-    rgba(125, 230, 255, 0.9),
-    rgba(47, 115, 255, 0.18)
+    transparent,
+    rgba(47, 115, 255, 0.7) 20%,
+    rgba(73, 167, 255, 1) 50%,
+    rgba(125, 230, 255, 0.9) 70%,
+    transparent
   );
+  animation: topbar-glow 3s ease-in-out infinite;
 }
 
-.hero-left {
-  position: relative;
-  z-index: 1;
+@keyframes topbar-glow {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.dtb-l {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.625rem;
 }
 
-.hero-right {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.hero-icon {
-  width: 3.25rem;
-  height: 3.25rem;
-  border-radius: 1.125rem;
+.dtb-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5625rem;
   background: linear-gradient(135deg, var(--blue-1), var(--blue-2) 60%, var(--blue-3));
-  box-shadow: 0 0.75rem 1.5rem rgba(47, 115, 255, 0.22);
+  box-shadow: 0 0.25rem 0.875rem rgba(47, 115, 255, 0.5);
   position: relative;
-  overflow: hidden;
   flex-shrink: 0;
 }
 
-.hero-icon::before,
-.hero-icon::after {
-  content: "";
+.dtb-icon::before,
+.dtb-icon::after {
+  content: '';
   position: absolute;
   border-radius: 999rem;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.9);
 }
 
-.hero-icon::before {
-  width: 1.5rem;
-  height: 0.1875rem;
-  left: 0.875rem;
-  top: 1.5rem;
+.dtb-icon::before {
+  width: 1rem;
+  height: 0.15rem;
+  left: 0.5rem;
+  top: 0.9375rem;
   transform: rotate(-24deg);
 }
 
-.hero-icon::after {
-  width: 1.125rem;
-  height: 0.1875rem;
-  left: 1.125rem;
-  top: 1.0625rem;
-  box-shadow: -0.5rem 0.6875rem 0 rgba(255, 255, 255, 0.92);
+.dtb-icon::after {
+  width: 0.75rem;
+  height: 0.15rem;
+  left: 0.65rem;
+  top: 0.625rem;
+  box-shadow: -0.3125rem 0.5rem 0 rgba(255, 255, 255, 0.9);
 }
 
-.hero-text h1 {
-  margin: 0;
-  font-size: 1.75rem;
-  line-height: 1.1;
+.dtb-title {
+  font-size: 0.875rem;
   font-weight: 900;
-  letter-spacing: 0.0125rem;
-}
-
-.hero-text p {
-  margin: 0.375rem 0 0;
-  color: var(--text-2);
-  font-size: 0.75rem;
-  letter-spacing: 0.1rem;
-  text-transform: uppercase;
-}
-
-.hero-badge {
-  position: relative;
-  z-index: 1;
-  padding: 0.5rem 0.875rem;
-  border-radius: 999rem;
-  background: rgba(255, 255, 255, 0.56);
-  border: 0.0625rem solid rgba(73, 167, 255, 0.18);
-  color: #4f74b0;
-  font-size: 0.75rem;
-  letter-spacing: 0.0625rem;
+  color: rgba(210, 228, 255, 0.96);
+  letter-spacing: 0.01rem;
   white-space: nowrap;
+}
+
+.dtb-sep {
+  font-style: normal;
+  margin: 0 0.375rem;
+  opacity: 0.5;
+}
+
+.dtb-live {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  padding: 0.1875rem 0.5625rem;
+  border-radius: 999rem;
+  background: rgba(47, 115, 255, 0.18);
+  border: 0.0625rem solid rgba(73, 167, 255, 0.28);
+  font-size: 0.625rem;
+  font-weight: 900;
+  color: rgba(125, 230, 255, 0.95);
+  letter-spacing: 0.06rem;
+}
+
+.dtb-pip {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 999rem;
+  background: #7de6ff;
+  box-shadow: 0 0 0.3125rem rgba(125, 230, 255, 0.85);
+  animation: pip-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pip-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0.25rem rgba(125, 230, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0.75rem rgba(125, 230, 255, 1), 0 0 1.375rem rgba(125, 230, 255, 0.38);
+  }
+}
+
+.dtb-r {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.demo-topbar .nav-item {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(73, 167, 255, 0.22);
+  color: rgba(175, 210, 255, 0.85);
+}
+
+.demo-topbar .nav-item:hover {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(73, 167, 255, 0.45);
+  color: #fff;
+}
+
+.demo-topbar .nav-item.active {
+  background: linear-gradient(135deg, rgba(47, 115, 255, 0.88), rgba(73, 167, 255, 0.82));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0.25rem 0.875rem rgba(47, 115, 255, 0.45);
 }
 
 .layout {
   min-height: 0;
   display: grid;
-  grid-template-columns: 21.875rem minmax(0, 1fr);
+  grid-template-columns: 22rem minmax(0, 1fr);
   gap: var(--gap);
 }
 
@@ -628,16 +713,22 @@ body::before {
 }
 
 .panel::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(72, 163, 255, 0.08), transparent 20%, transparent 80%, rgba(123, 231, 255, 0.08)),
+  background: linear-gradient(
+      180deg,
+      rgba(72, 163, 255, 0.08),
+      transparent 20%,
+      transparent 80%,
+      rgba(123, 231, 255, 0.08)
+    ),
     linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
 }
 
 .panel::after {
-  content: "";
+  content: '';
   position: absolute;
   left: 1.25rem;
   right: 1.25rem;
@@ -660,7 +751,7 @@ body::before {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 1.125rem 1.125rem 0;
+  padding: 1rem 1.125rem 0;
 }
 
 .panel-title {
@@ -686,7 +777,6 @@ body::before {
   min-height: 0;
   overflow: hidden;
   display: grid;
-  /* 中间「指标结果」占据剩余高度并可滚动，避免整表被裁切 */
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   align-content: stretch;
   gap: 0;
@@ -703,7 +793,7 @@ body::before {
 
 .field {
   display: grid;
-  gap: 0.4375rem;
+  gap: 0.375rem;
 }
 
 .field label {
@@ -711,11 +801,22 @@ body::before {
   font-weight: 800;
   color: #2a4f92;
   padding-left: 0.1875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.field-hint {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-2);
+  opacity: 0.75;
+  letter-spacing: 0;
 }
 
 .field input {
   width: 100%;
-  height: 2.625rem;
+  height: 2.5rem;
   border: 0.0625rem solid rgba(74, 129, 255, 0.13);
   border-radius: 0.9375rem;
   background: rgba(255, 255, 255, 0.84);
@@ -736,14 +837,15 @@ body::before {
 
 .radio-group {
   display: grid;
-  gap: 0.625rem;
+  gap: 0.5rem;
+  transition: opacity 0.3s ease, pointer-events 0.3s ease;
 }
 
 .radio-item {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 0.9375rem;
   border: 0.0625rem solid rgba(74, 129, 255, 0.13);
   background: rgba(255, 255, 255, 0.84);
@@ -782,7 +884,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.625rem 0.75rem 0.5rem;
+  padding: 0.5rem 0.75rem 0.4rem;
   border-bottom: 0.0625rem solid rgba(57, 124, 255, 0.1);
 }
 
@@ -792,10 +894,14 @@ body::before {
   color: #29508d;
 }
 
-.metrics-header span {
+.metrics-badge {
   font-size: 0.625rem;
-  color: var(--text-2);
-  letter-spacing: 0.0375rem;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, var(--blue-1), var(--blue-2));
+  padding: 0.2rem 0.625rem;
+  border-radius: 999rem;
+  letter-spacing: 0.04rem;
   text-transform: uppercase;
 }
 
@@ -837,6 +943,12 @@ body::before {
   width: 34%;
 }
 
+.metric-improve.improve-good {
+  color: #0d7a3e;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.08);
+}
+
 .metrics-empty {
   padding: 1.125rem 0.875rem;
   text-align: center;
@@ -861,7 +973,7 @@ body::before {
 
 .loading-bar {
   width: 100%;
-  height: 0.625rem;
+  height: 0.5rem;
   border-radius: 999rem;
   background: rgba(73, 167, 255, 0.12);
   overflow: hidden;
@@ -869,7 +981,7 @@ body::before {
 }
 
 .loading-bar::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   width: 38%;
@@ -895,19 +1007,33 @@ body::before {
 }
 
 .btn {
-  height: 2.625rem;
+  height: 2.5rem;
   border: none;
   border-radius: 1rem;
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 800;
-  transition: 0.2s ease;
+  transition: 0.22s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.btn-icon {
+  font-size: 0.75rem;
+  opacity: 0.85;
 }
 
 .btn-primary {
   color: #fff;
   background: linear-gradient(135deg, var(--blue-1), var(--blue-2) 65%, var(--blue-3));
-  box-shadow: 0 0.75rem 1.5rem rgba(47, 115, 255, 0.22);
+  box-shadow: 0 0.5rem 1.25rem rgba(47, 115, 255, 0.28);
+}
+
+.btn-primary:hover {
+  transform: translateY(-0.125rem);
+  box-shadow: 0 0.75rem 1.75rem rgba(47, 115, 255, 0.38);
 }
 
 .btn-secondary {
@@ -916,58 +1042,45 @@ body::before {
   border: 0.0625rem solid rgba(74, 129, 255, 0.1);
 }
 
-.btn:hover {
+.btn-secondary:hover {
   transform: translateY(-0.125rem);
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(47, 115, 255, 0.22);
 }
 
+/* ── Output Panel ── */
 .output-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  padding-bottom: 1rem;
+  padding-bottom: 0.875rem;
 }
 
 .output-body {
   position: relative;
   z-index: 1;
-  padding: 0.75rem 1rem 0;
+  padding: 0.625rem 0.875rem 0;
   min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
 }
 
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+/* ── Result Grid ── */
+#resultGrid {
+  min-height: 0;
+  height: 100%;
 }
 
-.section-head h3 {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 800;
-}
-
-.section-head span {
-  color: var(--text-2);
-  font-size: 0.625rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05rem;
-}
-
-/* 左侧大图 + 右侧 2×2 小图，避免方形格子撑满导致上下留白 */
+/* 左侧大图 + 右侧 2×2 小图，完全撑满容器 */
 .result-flex {
   min-height: 0;
   height: 100%;
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
 
 .result-main-col {
-  flex: 1.15;
+  flex: 1.2;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -981,35 +1094,37 @@ body::before {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 0.625rem;
+  gap: 0.5rem;
   align-content: stretch;
-}
-
-#resultGrid {
-  min-height: 0;
-  height: 100%;
 }
 
 .result-card {
   position: relative;
   overflow: hidden;
-  border-radius: 1.125rem;
+  border-radius: 1rem;
   border: 0.0625rem solid rgba(255, 255, 255, 0.68);
   background: linear-gradient(180deg, rgba(248, 252, 255, 0.92), rgba(229, 242, 255, 0.84));
-  box-shadow: 0 1rem 2rem rgba(67, 116, 212, 0.1);
-  padding: 0.375rem 0.5rem 0.5rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(67, 116, 212, 0.1);
+  padding: 0.3rem 0.4rem 0.4rem;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .result-card::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 24%, transparent 72%, rgba(99, 179, 255, 0.08)),
+  background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.2),
+      transparent 24%,
+      transparent 72%,
+      rgba(99, 179, 255, 0.08)
+    ),
     radial-gradient(circle at top right, rgba(123, 231, 255, 0.24), transparent 26%);
 }
 
@@ -1018,10 +1133,17 @@ body::before {
   min-height: 0;
 }
 
+/* 鼠标悬停放大效果 */
+.result-card:hover {
+  box-shadow: 0 1.25rem 3rem rgba(47, 115, 255, 0.2);
+  transform: scale(1.018);
+  z-index: 10;
+}
+
 .result-caption {
   flex-shrink: 0;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 800;
   color: var(--text-1);
   line-height: 1.25;
@@ -1041,7 +1163,7 @@ body::before {
   width: 100%;
   height: 100%;
   flex: 1 1 auto;
-  border-radius: 0.875rem;
+  border-radius: 0.75rem;
   overflow: hidden;
   background: radial-gradient(circle at 50% 16%, rgba(123, 231, 255, 0.44), transparent 24%),
     linear-gradient(135deg, #ddf0ff, #b7dbff 58%, #96c9ff);
@@ -1049,17 +1171,17 @@ body::before {
 }
 
 .result-video-wrap::before {
-  content: "";
+  content: '';
   position: absolute;
-  inset: 0.625rem;
-  border-radius: 0.75rem;
+  inset: 0.5rem;
+  border-radius: 0.625rem;
   border: 0.0625rem solid rgba(255, 255, 255, 0.34);
   pointer-events: none;
   z-index: 2;
 }
 
 .result-video-wrap::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -1083,27 +1205,27 @@ body::before {
 
 .result-video-wrap .hud::before,
 .result-video-wrap .hud::after {
-  content: "";
+  content: '';
   position: absolute;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-color: rgba(255, 255, 255, 0.72);
   border-style: solid;
   filter: drop-shadow(0 0 0.5rem rgba(72, 163, 255, 0.24));
 }
 
 .result-video-wrap .hud::before {
-  top: 0.875rem;
-  left: 0.875rem;
-  border-width: 0.1875rem 0 0 0.1875rem;
-  border-top-left-radius: 0.625rem;
+  top: 0.625rem;
+  left: 0.625rem;
+  border-width: 0.15rem 0 0 0.15rem;
+  border-top-left-radius: 0.5rem;
 }
 
 .result-video-wrap .hud::after {
-  right: 0.875rem;
-  bottom: 0.875rem;
-  border-width: 0 0.1875rem 0.1875rem 0;
-  border-bottom-right-radius: 0.625rem;
+  right: 0.625rem;
+  bottom: 0.625rem;
+  border-width: 0 0.15rem 0.15rem 0;
+  border-bottom-right-radius: 0.5rem;
 }
 
 .auto-video {
@@ -1111,12 +1233,12 @@ body::before {
   height: 100%;
   display: block;
   object-fit: contain;
-  padding: 0.375rem;
+  padding: 0.3rem;
   background: transparent;
 }
 
 .result-card.large .auto-video {
-  padding: 0.625rem;
+  padding: 0.5rem;
 }
 
 .floating-orb {
@@ -1127,40 +1249,12 @@ body::before {
   opacity: 0.6;
 }
 
-.orb-1 {
-  width: 8.75rem;
-  height: 8.75rem;
-  background: rgba(72, 163, 255, 0.22);
-  top: -2.25rem;
-  right: 6.25rem;
-}
-
 .orb-2 {
   width: 6.25rem;
   height: 6.25rem;
   background: rgba(123, 231, 255, 0.18);
   bottom: 2rem;
   left: -1.125rem;
-}
-
-.full-image-page {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 0.75rem 1.5rem;
-  overflow: auto;
-}
-
-.full-image-page img {
-  max-width: min(87.5rem, 100%);
-  width: auto;
-  height: auto;
-  max-height: calc(100vh - 7.5rem);
-  object-fit: contain;
-  border-radius: 0.75rem;
-  box-shadow: var(--shadow-md);
 }
 
 .chart-page {
@@ -1218,6 +1312,172 @@ body::before {
   }
 }
 
+/* ── 幕帘过渡 ── */
+.view-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(130deg, #06123a 0%, #122680 38%, #2f73ff 72%, #49a7ff 100%);
+  transform: translateX(100%);
+  will-change: transform;
+}
+
+.view-curtain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -30deg,
+    transparent,
+    transparent 3.5rem,
+    rgba(255, 255, 255, 0.025) 3.5rem,
+    rgba(255, 255, 255, 0.025) 3.5625rem
+  );
+  pointer-events: none;
+}
+
+.view-curtain.cv-in {
+  animation: vc-in 0.48s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+}
+.view-curtain.cv-out {
+  animation: vc-out 0.48s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+}
+
+@keyframes vc-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes vc-out {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.vc-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  opacity: 0;
+  animation: vc-body-fade 0.96s ease forwards;
+}
+
+@keyframes vc-body-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+.vc-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.875rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.07));
+  border: 0.0625rem solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.24), inset 0 0.0625rem 0 rgba(255, 255, 255, 0.24);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.vc-icon::before,
+.vc-icon::after {
+  content: '';
+  position: absolute;
+  border-radius: 999rem;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.vc-icon::before {
+  width: 1.25rem;
+  height: 0.1875rem;
+  left: 0.75rem;
+  top: 1.375rem;
+  transform: rotate(-24deg);
+}
+
+.vc-icon::after {
+  width: 0.9375rem;
+  height: 0.1875rem;
+  left: 0.9375rem;
+  top: 0.9375rem;
+  box-shadow: -0.4375rem 0.625rem 0 rgba(255, 255, 255, 0.88);
+}
+
+.vc-text {
+  font-size: 1.375rem;
+  font-weight: 950;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.1rem;
+  white-space: nowrap;
+}
+
+/* ── 结果区空状态 ── */
+#resultGrid:empty {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  min-height: 10rem;
+}
+
+#resultGrid:empty::before {
+  content: '';
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 999rem;
+  border: 0.1875rem solid rgba(47, 115, 255, 0.14);
+  border-top-color: rgba(47, 115, 255, 0.62);
+  box-shadow: 0 0 0 0.625rem rgba(47, 115, 255, 0.05), 0 0 0 1.25rem rgba(47, 115, 255, 0.025);
+  animation: radar-ring 2.2s ease-in-out infinite;
+}
+
+#resultGrid:empty::after {
+  content: '等待预测结果';
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(88, 120, 173, 0.48);
+  letter-spacing: 0.1rem;
+}
+
+@keyframes radar-ring {
+  0%,
+  100% {
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
 @keyframes fakeLoading {
   0% {
     transform: translateX(-120%);
@@ -1260,23 +1520,23 @@ body::before {
     width: min(100%, calc(100vw - 1rem));
     margin: 0.5rem auto;
   }
-  .hero {
-    padding: 1rem 1.125rem;
+  .demo-topbar {
+    padding: 0 0.875rem;
   }
-  .hero-text h1 {
-    font-size: 1.125rem;
+  .dtb-title {
+    font-size: 0.75rem;
   }
-  .hero-text p,
-  .hero-badge,
-  .panel-subtitle,
-  .section-head span {
+  .dtb-live {
+    display: none;
+  }
+  .panel-subtitle {
     display: none;
   }
   .layout {
     gap: 0.625rem;
   }
   .result-flex {
-    gap: 0.625rem;
+    gap: 0.5rem;
   }
 }
 </style>

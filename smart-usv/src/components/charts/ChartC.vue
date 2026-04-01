@@ -8,7 +8,7 @@
 <script setup>
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import * as echarts from 'echarts'
-import { modelColorMap, modelNames, scatterTradeOff } from './chartData'
+import { modelNames, scatterTradeOff } from './chartData'
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -19,22 +19,54 @@ let chart = null
 
 function render() {
   if (!chart) return
+  const palette = ['#2f73ff', '#10b981', '#f472b6', '#f59e0b', '#8b5cf6']
   chart.setOption({
     backgroundColor: 'transparent',
-    grid: { top: 54, left: 48, right: 22, bottom: 44, containLabel: true },
-    legend: { top: 8, left: 10, type: 'scroll', textStyle: { fontSize: 12 } },
-    tooltip: { trigger: 'item' },
-    xAxis: { type: 'value', name: 'Number of Parameters (K)' },
+    grid: { top: 48, left: 16, right: 16, bottom: 56, containLabel: true },
+    legend: {
+      bottom: 6,
+      left: 'center',
+      type: 'scroll',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { fontSize: 11, color: '#5878ad' },
+    },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(255,255,255,0.96)',
+      borderColor: 'rgba(47,115,255,0.18)',
+      textStyle: { color: '#13356f', fontSize: 12 },
+      formatter: (p) =>
+        `<b>${p.seriesName}</b><br/>参数量: ${p.value[0]}K<br/>推理延迟: ${p.value[1]}μs`,
+    },
+    xAxis: {
+      type: 'value',
+      name: 'Parameters (K)',
+      nameTextStyle: { color: '#5878ad', fontSize: 11 },
+      axisLabel: { color: '#5878ad', fontSize: 11 },
+      splitLine: { lineStyle: { color: 'rgba(88,120,173,0.1)', type: 'dashed' } },
+      axisLine: { lineStyle: { color: 'rgba(88,120,173,0.25)' } },
+      axisTick: { show: false },
+    },
     yAxis: {
       type: 'log',
-      name: 'CPU Inference Latency (μs)',
-      // ECharts log 轴需要数据 > 0，假数据已保证为正
+      name: 'Latency (μs)',
+      nameTextStyle: { color: '#5878ad', fontSize: 11 },
+      axisLabel: { color: '#5878ad', fontSize: 11 },
+      splitLine: { lineStyle: { color: 'rgba(88,120,173,0.1)', type: 'dashed' } },
+      axisLine: { show: false },
+      axisTick: { show: false },
     },
-    series: modelNames.map((m) => ({
+    series: modelNames.map((m, i) => ({
       name: m,
       type: 'scatter',
-      itemStyle: { color: modelColorMap[m] },
-      symbolSize: 10,
+      itemStyle: {
+        color: palette[i],
+        opacity: 0.88,
+        shadowBlur: 8,
+        shadowColor: palette[i] + '55',
+      },
+      symbolSize: (val) => Math.max(12, Math.min(28, val[0] / 12)),
       data: scatterTradeOff[m] || [],
     })),
   })
