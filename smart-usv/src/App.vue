@@ -407,100 +407,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path
-                d="M16 4L4 10L16 16L28 10L16 4Z"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M4 22L16 28L28 22"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M4 16L16 22L28 16"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </div>
-          <h3 class="feature-title">深度学习驱动</h3>
-          <p class="feature-desc">采用CNN神经网络，自适应学习控制策略</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <circle
-                cx="16"
-                cy="16"
-                r="10"
-                stroke="currentColor"
-                stroke-width="2"
-              />
-              <path
-                d="M16 6V16L22 19"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </div>
-          <h3 class="feature-title">实时响应</h3>
-          <p class="feature-desc">毫秒级预测速度，保证控制系统实时性</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path
-                d="M16 4L20 12L28 14L22 20L24 28L16 24L8 28L10 20L4 14L12 12L16 4Z"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </div>
-          <h3 class="feature-title">高精度控制</h3>
-          <p class="feature-desc">相比传统方法，误差降低超过90%</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <rect
-                x="6"
-                y="6"
-                width="20"
-                height="20"
-                rx="2"
-                stroke="currentColor"
-                stroke-width="2"
-              />
-              <path
-                d="M12 16L15 19L20 13"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </div>
-          <h3 class="feature-title">鲁棒性强</h3>
-          <p class="feature-desc">应对参数不确定和环境噪声干扰</p>
-        </div>
-      </div>
     </section>
 
     <div class="main-view" v-show="view === 'demo'">
@@ -1045,6 +951,7 @@ html {
 .stat-value {
   font-size: 2rem;
   font-weight: 900;
+  line-height: 1.3;
   background: linear-gradient(135deg, var(--blue-2), var(--blue-3));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1147,7 +1054,6 @@ html {
   z-index: 1;
 }
 
-/* ========== Demo Page Styles ========== */
 .main-view {
   flex: 1;
   min-height: 0;
@@ -2339,11 +2245,6 @@ html {
 @media (max-width: 64rem) {
   .hero-content {
     padding: 4rem 2rem 3rem;
-  }
-
-  .features-grid {
-    padding: 3rem 2rem 4rem;
-    grid-template-columns: 1fr;
   }
 
   .hero-stats {
