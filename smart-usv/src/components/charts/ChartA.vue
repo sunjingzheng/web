@@ -1,8 +1,9 @@
 <template>
-  <div class="apple-chart-card">
+  <div class="chart-card">
     <div class="chart-header">
-      <div class="chart-label">Figure A</div>
-      <h3 class="chart-title">DOB Residual Reduction — Surge (u-channel)</h3>
+      <div class="chart-badge">Figure A</div>
+      <h3 class="chart-title">RMS 误差降低率 — 全程对比</h3>
+      <p class="chart-sub">各工况下 BASE vs CNN 全程位置误差 RMS 改善幅度</p>
     </div>
     <div ref="elRef" class="chart-canvas"></div>
   </div>
@@ -11,10 +12,6 @@
 <script setup>
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import * as echarts from 'echarts'
-import { barSurgeU, modelNames, scenarios } from './chartData'
-import { appleChartTheme } from './chartStyles'
-
-const scenariosA = scenarios.slice(1)
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -23,92 +20,107 @@ const props = defineProps({
 const elRef = ref(null)
 let chart = null
 
+const scenarios = ['Main', 'A1', 'A2', 'B1', 'B2']
+const rmsData = {
+  BASE: [0.2795, 0.2981, 0.2614, 0.2612, 0.3169],
+  CNN:  [0.2016, 0.1921, 0.1919, 0.1919, 0.2412],
+}
+const improvePct = [27.87, 35.55, 26.58, 26.54, 23.88]
+
 function render() {
   if (!chart) return
-
-  const palette = appleChartTheme.modelColors
-
   chart.setOption({
-    ...appleChartTheme.getBaseConfig(),
-    grid: { ...appleChartTheme.getGridConfig(), top: 70 },
+    backgroundColor: 'transparent',
+    animation: true,
+    animationDuration: 900,
+    animationEasing: 'cubicOut',
+    grid: { top: 24, left: 16, right: 60, bottom: 56, containLabel: true },
     legend: {
-      ...appleChartTheme.getLegendConfig(),
-      formatter: (name) => (name === '__zero__' ? '' : name),
+      bottom: 8,
+      left: 'center',
+      itemWidth: 14,
+      itemHeight: 14,
+      itemGap: 24,
+      textStyle: { fontSize: 12, color: '#5878ad', fontWeight: 600 },
+      icon: 'roundRect',
     },
     tooltip: {
-      ...appleChartTheme.getTooltipConfig(),
       trigger: 'axis',
-      axisPointer: {
-        type: 'shadow',
-        shadowStyle: {
-          color: 'rgba(0, 0, 0, 0.03)',
-        }
-      },
-      formatter: (params) => {
-        const filtered = params.filter(p => p.seriesName !== '__zero__')
-        let result = `<div style="font-weight: 600; margin-bottom: 8px;">${filtered[0].axisValue}</div>`
-        filtered.forEach(p => {
-          const value = p.value
-          const color = p.color
-          result += `<div style="display: flex; align-items: center; margin-top: 6px;">
-            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${color}; margin-right: 8px;"></span>
-            <span style="flex: 1;">${p.seriesName}</span>
-            <span style="font-weight: 600; margin-left: 16px;">${value.toFixed(2)}%</span>
+      axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(47,115,255,0.04)' } },
+      backgroundColor: 'rgba(255,255,255,0.96)',
+      borderColor: 'rgba(47,115,255,0.18)',
+      borderWidth: 1,
+      textStyle: { color: '#13356f', fontSize: 12 },
+      padding: [10, 14],
+      extraCssText: 'border-radius: 10px; box-shadow: 0 8px 24px rgba(47,115,255,0.12);',
+      formatter(params) {
+        const s = params[0].axisValue
+        const i = scenarios.indexOf(s)
+        let h = `<div style="font-weight:800;color:#13356f;margin-bottom:6px">${s} 工况</div>`
+        params.forEach(p => {
+          h += `<div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${p.color}"></span>
+            <span style="color:#5878ad">${p.seriesName}</span>
+            <span style="font-weight:700;margin-left:auto;color:#13356f">${p.value.toFixed(4)} m</span>
           </div>`
         })
-        return result
+        h += `<div style="margin-top:8px;padding-top:6px;border-top:1px solid rgba(47,115,255,0.12);color:#0a7c44;font-weight:800">↓ 改善 ${improvePct[i]}%</div>`
+        return h
       }
     },
     xAxis: {
-      ...appleChartTheme.getAxisConfig(true),
       type: 'category',
-      data: scenariosA,
-      axisLabel: {
-        ...appleChartTheme.getAxisConfig(true).axisLabel,
-        fontWeight: 600,
-      }
+      data: scenarios,
+      axisLine: { lineStyle: { color: 'rgba(47,115,255,0.15)' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#5878ad', fontSize: 12, fontWeight: 700 },
     },
     yAxis: {
-      ...appleChartTheme.getAxisConfig(false),
       type: 'value',
-      name: 'Residual Reduction (%)',
-      min: -100,
-      max: 25,
+      name: 'RMS (m)',
+      nameTextStyle: { color: '#5878ad', fontSize: 11, fontWeight: 600 },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#5878ad', fontSize: 11 },
+      splitLine: { lineStyle: { color: 'rgba(47,115,255,0.06)', type: 'dashed' } },
     },
     series: [
-      ...modelNames.map((name, i) => ({
-        name,
+      {
+        name: 'BASE',
         type: 'bar',
-        barMaxWidth: 16,
-        barGap: '30%',
-        barCategoryGap: '35%',
+        barWidth: '28%',
+        barGap: '20%',
         itemStyle: {
-          color: palette[i],
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(164,196,255,0.9)' },
+            { offset: 1, color: 'rgba(99,152,255,0.5)' },
+          ]),
           borderRadius: [6, 6, 0, 0],
         },
-        emphasis: {
-          focus: 'series',
-          itemStyle: {
-            opacity: 0.8,
-            shadowBlur: 10,
-            shadowColor: palette[i] + '40',
-          },
-        },
-        data: (barSurgeU[name] || []).slice(1).map((v) => (typeof v === 'number' ? v : Number(v))),
-      })),
+        emphasis: { itemStyle: { opacity: 0.85 } },
+        data: rmsData.BASE,
+      },
       {
-        name: '__zero__',
-        type: 'line',
-        silent: true,
-        legendHoverLink: false,
-        data: scenariosA.map(() => 0),
-        symbol: 'none',
-        tooltip: { show: false },
-        lineStyle: {
-          color: 'rgba(0, 0, 0, 0.15)',
-          width: 1.5,
+        name: 'CNN',
+        type: 'bar',
+        barWidth: '28%',
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(47,115,255,1)' },
+            { offset: 1, color: 'rgba(73,167,255,0.7)' },
+          ]),
+          borderRadius: [6, 6, 0, 0],
         },
-        z: 1,
+        emphasis: { itemStyle: { opacity: 0.85 } },
+        data: rmsData.CNN,
+        label: {
+          show: true,
+          position: 'top',
+          formatter: (p) => `↓${improvePct[p.dataIndex]}%`,
+          color: '#0a7c44',
+          fontWeight: 800,
+          fontSize: 10,
+        },
       },
     ],
   })
@@ -122,60 +134,53 @@ async function ensure() {
   chart.resize()
 }
 
-watch(
-  () => props.active,
-  async (v) => {
-    if (!v) return
-    await ensure()
-  },
-  { immediate: true }
-)
-
-onBeforeUnmount(() => {
-  chart?.dispose()
-  chart = null
-})
+watch(() => props.active, async (v) => { if (v) await ensure() }, { immediate: true })
+onBeforeUnmount(() => { chart?.dispose(); chart = null })
 </script>
 
 <style scoped>
-.apple-chart-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 24px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.chart-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(47, 115, 255, 0.12);
+  padding: 1.25rem 1.25rem 0.75rem;
+  box-shadow: 0 4px 24px rgba(47, 115, 255, 0.08);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
-
-.apple-chart-card:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+.chart-card:hover {
+  box-shadow: 0 12px 36px rgba(47, 115, 255, 0.14);
   transform: translateY(-2px);
 }
-
-.chart-header {
-  margin-bottom: 20px;
-}
-
-.chart-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+.chart-header { margin-bottom: 0.875rem; }
+.chart-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08rem;
   text-transform: uppercase;
-  color: #86868b;
-  margin-bottom: 6px;
+  color: #2f73ff;
+  background: rgba(47, 115, 255, 0.08);
+  border: 1px solid rgba(47, 115, 255, 0.18);
+  border-radius: 999rem;
+  padding: 0.2rem 0.6rem;
+  margin-bottom: 0.375rem;
 }
-
 .chart-title {
-  font-size: 17px;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin: 0;
-  letter-spacing: -0.3px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #13356f;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.01rem;
 }
-
+.chart-sub {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #5878ad;
+  line-height: 1.5;
+}
 .chart-canvas {
   width: 100%;
-  height: 380px;
+  height: 320px;
 }
 </style>

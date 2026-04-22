@@ -248,6 +248,181 @@
         </div>
       </section>
 
+      <!-- ⑤.5  系统技术架构展示  ───────────────────────── -->
+      <section class="arch-sec reveal-on-scroll" aria-label="系统技术架构">
+        <div class="sec-hd">
+          <div class="sec-tag">系统架构</div>
+          <h2>系统技术构架图</h2>
+          <p>强时变扰动下欠驱动无人船高精度轨迹跟踪的完整技术架构，实现了高稳定性与泛化性的自主航行控制</p>
+        </div>
+
+        <div class="arch-body">
+          <!-- 左侧：四层模块 -->
+          <div class="arch-layers">
+            <div class="arch-layer reveal-on-scroll" style="--d:0.05s">
+              <div class="layer-label">
+                <span class="layer-icon layer-icon-1"></span>
+                感知<br/>数据
+              </div>
+              <div class="layer-content">
+                <div class="layer-tags">
+                  <span class="ltag ltag-blue">多源传感器数据采集</span>
+                  <span class="ltag ltag-blue-light">环境与状态感知</span>
+                </div>
+                <div class="layer-bullets">
+                  <span class="lbullet">● 采集USV位置</span>
+                  <span class="lbullet">● 多源异构数据同步</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="arch-layer reveal-on-scroll" style="--d:0.12s">
+              <div class="layer-label">
+                <span class="layer-icon layer-icon-2"></span>
+                一维<br/>CNN<br/>模型
+              </div>
+              <div class="layer-content">
+                <div class="layer-tags">
+                  <span class="ltag ltag-purple">PyTorch深度学习框架</span>
+                  <span class="ltag ltag-purple-light">DOB观测误差修正</span>
+                </div>
+                <div class="layer-bullets">
+                  <span class="lbullet">● 强时变扰动自适应补偿</span>
+                  <span class="lbullet">● 稳定性</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="arch-layer reveal-on-scroll" style="--d:0.19s">
+              <div class="layer-label">
+                <span class="layer-icon layer-icon-3"></span>
+                控制<br/>算法
+              </div>
+              <div class="layer-content">
+                <div class="layer-tags">
+                  <span class="ltag ltag-teal">反步控制+DOB观测器</span>
+                  <span class="ltag ltag-teal-light">鲁棒控制框架</span>
+                </div>
+                <div class="layer-bullets">
+                  <span class="lbullet">● 李雅普诺夫稳定保障</span>
+                  <span class="lbullet">● 扰动估计</span>
+                </div>
+                <div class="layer-tags" style="margin-top:0.375rem">
+                  <span class="ltag ltag-teal">轨迹跟踪闭环系统</span>
+                  <span class="ltag ltag-teal-light">自主航行核心</span>
+                </div>
+                <div class="layer-bullets">
+                  <span class="lbullet">● 强时变扰动下高精度跟踪</span>
+                  <span class="lbullet">● 泛化性强</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="arch-layer reveal-on-scroll" style="--d:0.26s">
+              <div class="layer-label">
+                <span class="layer-icon layer-icon-4"></span>
+                嵌入<br/>式部<br/>署
+              </div>
+              <div class="layer-content">
+                <div class="layer-tags">
+                  <span class="ltag ltag-green">仿真与实船验证</span>
+                  <span class="ltag ltag-green-light">系统性能测试</span>
+                </div>
+                <div class="layer-bullets">
+                  <span class="lbullet">● 多工况对比实验</span>
+                </div>
+                <div class="layer-tags" style="margin-top:0.375rem">
+                  <span class="ltag ltag-green">岸基监控平台</span>
+                  <span class="ltag ltag-green-light">远程状态监控</span>
+                </div>
+                <div class="layer-bullets">
+                  <span class="lbullet">● 轨迹可视化</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：系统技术构架流程图 -->
+          <div class="arch-diagram reveal-on-scroll" style="--d:0.1s">
+            <div class="diag-title">系统技术构架图</div>
+            <div class="diag-body">
+              <!-- 三列：系统模型 / 一维CNN补偿 / 实验结果 -->
+              <div class="diag-col">
+                <div class="diag-col-hd diag-hd-blue">系统模型</div>
+                <div class="diag-block diag-red">Fossen<br/>三自由度<br/>模型</div>
+                <div class="diag-arrow-down"></div>
+                <div class="diag-block diag-orange">欠驱动</div>
+                <div class="diag-arrow-down"></div>
+                <div class="diag-block diag-yellow">外部扰动<br/>有界</div>
+                <div class="diag-arrow-down"></div>
+                <div class="diag-block diag-green-light">李雅诺夫<br/>稳定</div>
+              </div>
+
+              <div class="diag-col diag-col-mid">
+                <div class="diag-col-hd diag-hd-blue">一维CNN补偿</div>
+                <div class="diag-row-group">
+                  <div class="diag-sm-block">核心控制器</div>
+                </div>
+                <div class="diag-row-group">
+                  <div class="diag-sm-block">反步控制</div>
+                  <div class="diag-sm-block">DOB</div>
+                  <div class="diag-sm-block diag-sm-blue">一维CNN</div>
+                </div>
+                <div class="diag-arrow-down"></div>
+                <div class="diag-row-group">
+                  <div class="diag-sm-block diag-sm-yellow">残差学习、辅助学习</div>
+                </div>
+                <div class="diag-row-group">
+                  <div class="diag-sm-block diag-sm-yellow">欠驱动USV</div>
+                  <div class="diag-sm-block diag-sm-yellow">强时变扰动</div>
+                </div>
+                <div class="diag-row-group">
+                  <div class="diag-sm-block diag-sm-yellow">DOB观测残差大、稳态误差高</div>
+                </div>
+                <div class="diag-row-group">
+                  <div class="diag-sm-block diag-sm-yellow">模型不确定性</div>
+                  <div class="diag-sm-block diag-sm-yellow">环境干扰</div>
+                  <div class="diag-sm-block diag-sm-yellow">传感器噪声</div>
+                </div>
+                <div class="diag-arrow-down"></div>
+                <div class="diag-data-box">
+                  <div class="data-in">
+                    <div class="data-label">数据<br/>输入</div>
+                    <div class="data-items">
+                      <div class="di">特征提取</div>
+                      <div class="di">误差反馈</div>
+                      <div class="di">参数更新</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="diag-arrow-down"></div>
+                <div class="diag-row-group">
+                  <div class="diag-sm-block diag-sm-green">控制输出</div>
+                  <div class="diag-sm-block diag-sm-green">状态估计</div>
+                </div>
+                <div class="diag-row-group">
+                  <div class="diag-sm-block diag-sm-green">状态估计</div>
+                  <div class="diag-sm-block diag-sm-green">误差修正</div>
+                </div>
+              </div>
+
+              <div class="diag-col">
+                <div class="diag-col-hd diag-hd-blue">实验结果</div>
+                <div class="diag-result diag-result-red">RMS降<br/>低20-<br/>36%</div>
+                <div class="diag-result diag-result-yellow" style="margin-top:1.5rem">稳态误差<br/>降低60-<br/>91%</div>
+                <div class="diag-result diag-result-orange" style="margin-top:1.5rem">控制能力<br/>不增加</div>
+                <div class="diag-result diag-result-green" style="margin-top:1rem">闭合有<br/>界、CNN<br/>不破坏</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部总结条 -->
+        <div class="arch-footer reveal-on-scroll" style="--d:0.3s">
+          强时变扰动下欠驱动无人船高精度轨迹跟踪的完整技术架构，实现了高稳定性与泛化性的自主航行控制
+        </div>
+      </section>
+
       <!-- ⑥  CHARTS  ──────────────────────────────────── -->
       <section class="charts-sec" ref="chartsSection" aria-label="仿真图表">
         <div class="sec-hd reveal-on-scroll">
@@ -1365,6 +1540,272 @@ onBeforeUnmount(() => {
   }
   .car-inds {
     display: none;
+  }
+}
+
+/* ─── ⑤.5 ARCH ─── */
+.arch-sec {
+  border-radius: 1.375rem;
+  border: 0.0625rem solid rgba(255, 255, 255, 0.72);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(230, 242, 255, 0.8));
+  box-shadow: 0 1rem 2.5rem rgba(47, 115, 255, 0.1);
+  padding: 1.5rem 1.5rem 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.arch-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+/* 左侧四层 */
+.arch-layers {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.arch-layer {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 0.625rem;
+  border-radius: 0.875rem;
+  border: 0.0625rem solid rgba(47, 115, 255, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.625rem 0.75rem;
+  align-items: start;
+}
+
+.layer-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: #13356f;
+  line-height: 1.3;
+  text-align: center;
+  padding-top: 0.125rem;
+}
+
+.layer-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
+  flex-shrink: 0;
+}
+.layer-icon-1 { background: linear-gradient(135deg, #2f73ff, #49a7ff); }
+.layer-icon-2 { background: linear-gradient(135deg, #7b52de, #af79ff); }
+.layer-icon-3 { background: linear-gradient(135deg, #0aa3a3, #3ecfcf); }
+.layer-icon-4 { background: linear-gradient(135deg, #0a8a4a, #34c78a); }
+
+.layer-content {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.layer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.ltag {
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999rem;
+  white-space: nowrap;
+}
+.ltag-blue       { background: #2f73ff; color: #fff; }
+.ltag-blue-light { background: rgba(73,167,255,0.18); color: #2252b0; border: 0.0625rem solid rgba(47,115,255,0.3); }
+.ltag-purple       { background: #7b52de; color: #fff; }
+.ltag-purple-light { background: rgba(175,121,255,0.15); color: #6033b8; border: 0.0625rem solid rgba(123,82,222,0.3); }
+.ltag-teal       { background: #0aa3a3; color: #fff; }
+.ltag-teal-light { background: rgba(62,207,207,0.15); color: #0a7070; border: 0.0625rem solid rgba(10,163,163,0.3); }
+.ltag-green       { background: #0a8a4a; color: #fff; }
+.ltag-green-light { background: rgba(52,199,138,0.15); color: #0a6035; border: 0.0625rem solid rgba(10,138,74,0.3); }
+
+.layer-bullets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.75rem;
+}
+.lbullet {
+  font-size: 0.6875rem;
+  color: #5878ad;
+  font-weight: 600;
+}
+
+/* 右侧构架图 */
+.arch-diagram {
+  border-radius: 1rem;
+  border: 0.0625rem solid rgba(47, 115, 255, 0.14);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.875rem;
+  overflow: hidden;
+}
+
+.diag-title {
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: #13356f;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.05rem;
+}
+
+.diag-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 2fr) minmax(0, 0.85fr);
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.diag-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.diag-col-hd {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999rem;
+  text-align: center;
+  margin-bottom: 0.375rem;
+  white-space: nowrap;
+}
+.diag-hd-blue {
+  background: linear-gradient(135deg, #2f73ff, #49a7ff);
+  color: #fff;
+}
+
+.diag-block {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-align: center;
+  padding: 0.5rem 0.375rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  line-height: 1.4;
+}
+.diag-red    { background: rgba(235,70,70,0.15); color: #c0392b; border: 0.0625rem solid rgba(235,70,70,0.3); }
+.diag-orange { background: rgba(255,149,0,0.15); color: #b36200; border: 0.0625rem solid rgba(255,149,0,0.3); }
+.diag-yellow { background: rgba(255,204,0,0.12); color: #805a00; border: 0.0625rem solid rgba(255,204,0,0.3); }
+.diag-green-light { background: rgba(52,199,138,0.15); color: #0a6035; border: 0.0625rem solid rgba(52,199,138,0.3); }
+
+.diag-arrow-down {
+  width: 1px;
+  height: 0.75rem;
+  background: rgba(47, 115, 255, 0.3);
+  margin: 0.125rem auto;
+  position: relative;
+}
+.diag-arrow-down::after {
+  content: '';
+  position: absolute;
+  bottom: -0.25rem;
+  left: -0.2rem;
+  border: 0.25rem solid transparent;
+  border-top-color: rgba(47, 115, 255, 0.4);
+}
+
+.diag-col-mid { gap: 0.25rem; }
+
+.diag-row-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.diag-sm-block {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.375rem;
+  border: 0.0625rem solid rgba(47, 115, 255, 0.15);
+  background: rgba(255, 255, 255, 0.9);
+  color: #13356f;
+  white-space: nowrap;
+}
+.diag-sm-blue   { background: rgba(47,115,255,0.1); color: #2252b0; border-color: rgba(47,115,255,0.25); }
+.diag-sm-yellow { background: rgba(255,204,0,0.1); color: #805a00; border-color: rgba(255,180,0,0.3); }
+.diag-sm-green  { background: rgba(52,199,138,0.12); color: #0a6035; border-color: rgba(52,199,138,0.3); }
+
+.diag-data-box {
+  width: 100%;
+  border: 0.0625rem dashed rgba(47,115,255,0.25);
+  border-radius: 0.5rem;
+  padding: 0.375rem;
+}
+.data-in {
+  display: flex;
+  gap: 0.375rem;
+  align-items: center;
+}
+.data-label {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  color: #5878ad;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+.data-items {
+  display: grid;
+  gap: 0.2rem;
+  flex: 1;
+}
+.di {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.2rem 0.3rem;
+  border-radius: 0.25rem;
+  background: rgba(47,115,255,0.08);
+  color: #2252b0;
+  border: 0.0625rem solid rgba(47,115,255,0.15);
+}
+
+.diag-result {
+  font-size: 0.625rem;
+  font-weight: 900;
+  text-align: center;
+  padding: 0.5rem 0.375rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  line-height: 1.4;
+}
+.diag-result-red    { background: rgba(235,70,70,0.15); color: #c0392b; border: 0.0625rem solid rgba(235,70,70,0.3); }
+.diag-result-yellow { background: rgba(255,149,0,0.18); color: #b36200; border: 0.0625rem solid rgba(255,149,0,0.35); }
+.diag-result-orange { background: rgba(255,204,0,0.15); color: #805a00; border: 0.0625rem solid rgba(255,180,0,0.3); }
+.diag-result-green  { background: rgba(52,199,138,0.15); color: #0a6035; border: 0.0625rem solid rgba(52,199,138,0.3); }
+
+/* 底部总结条 */
+.arch-footer {
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.875rem;
+  background: linear-gradient(135deg, #13356f, #2252b0 50%, #2f73ff);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.04rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 64rem) {
+  .arch-body {
+    grid-template-columns: 1fr;
   }
 }
 </style>
