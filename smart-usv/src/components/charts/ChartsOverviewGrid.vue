@@ -1178,20 +1178,46 @@ onBeforeUnmount(() => {
 
 /* ─── ⑥ CHARTS ─── */
 .charts-sec {
-  border-radius: 1.375rem;
-  border: 0.0625rem solid rgba(255, 255, 255, 0.72);
-  background: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.86),
-    rgba(234, 243, 255, 0.76)
-  );
-  box-shadow: 0 1rem 2.5rem rgba(67, 116, 212, 0.08);
-  padding: 1.5rem 1.5rem 1.375rem;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(250, 250, 250, 0.6);
+  backdrop-filter: blur(40px) saturate(180%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  padding: 32px;
   display: grid;
-  gap: 1rem;
+  gap: 24px;
 }
 .cblock {
   margin: 0;
+}
+
+/* 苹果风格标题 */
+.charts-sec .sec-hd {
+  margin-bottom: 8px;
+}
+.charts-sec .sec-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #86868b;
+  background: rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(0, 122, 255, 0.12);
+  border-radius: 20px;
+  padding: 6px 14px;
+}
+.charts-sec .sec-hd h2 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
+  margin: 12px 0 8px;
+}
+.charts-sec .sec-hd p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #86868b;
+  font-weight: 400;
 }
 
 /* ─── ⑦ CTA FOOTER ─── */
