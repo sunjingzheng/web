@@ -10,13 +10,6 @@ let curtainTimer = null;
 
 // 从图片中读取的真实数据
 const metricsTemplate = {
-  Main: [
-    ["RMS", "0.2795", "0.2016", "27.87%"],
-    ["后20s的RMS", "0.4384", "0.0467", "89.38%"],
-    ["收敛时间", "4.80", "4.82", "不变"],
-    ["τ_u RMS", "54.7445", "54.5172", "不变"],
-    ["τ_r RMS", "21.7888", "21.5215", "不变"],
-  ],
   A1: [
     ["RMS", "0.2981", "0.1921", "35.55%"],
     ["后20s的RMS", "0.5137", "0.0464", "90.97%"],
@@ -48,15 +41,6 @@ const metricsTemplate = {
 };
 
 const scenarioVideoMap = {
-  Main: {
-    main: "/main/USV_Main.mp4",
-    subs: [
-      "/other/tau_r_Main.mp4",
-      "/other/tau_u_Main.mp4",
-      "/other/x_error_Main.mp4",
-      "/other/y_error_Main.mp4",
-    ],
-  },
   A1: {
     main: "/main/USV_A1.mp4",
     subs: [
@@ -109,7 +93,6 @@ const groupData = [1, 2, 3, 4, 5].map((n) => ({
 // 输入逻辑：0 → Main，1.5 → A1，0.7 → A2，空 → B1/B2
 function getScenarioFromInputs(inputs) {
   const val = (inputs.input1 || "").trim();
-  if (val === "0") return "Main";
   if (val === "1.5") return "A1";
   if (val === "0.7") return "A2";
   if (val) return "A1"; // 其他非空值默认 A1
@@ -568,13 +551,13 @@ onMounted(() => {
                   <label for="input1"
                     >扰动频率参数
                     <span class="field-hint"
-                      >0 → Main &nbsp;|&nbsp; 1.5 → A1 &nbsp;|&nbsp; 0.7 → A2</span
+                      >1.5 → A1 &nbsp;|&nbsp; 0.7 → A2</span
                     ></label
                   >
                   <input
                     id="input1"
                     type="text"
-                    placeholder="输入 0, 1.5 或 0.7"
+                    placeholder="输入 1.5 或 0.7"
                   />
                 </div>
                 <div class="field" id="bScenarioGroup">
