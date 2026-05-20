@@ -187,17 +187,20 @@ function attachResultSwapInteraction() {
 }
 
 function syncAndPlayVideos() {
-  const videos = Array.from(document.querySelectorAll(".auto-video"));
-  videos.forEach((video) => {
+  const main = document.querySelector(".video-main");
+  const all = Array.from(document.querySelectorAll(".auto-video"));
+
+  all.forEach((video) => {
     try { video.pause(); video.currentTime = 0; } catch (e) {}
     video.defaultMuted = true;
     video.muted = true;
   });
 
-  requestAnimationFrame(() => {
-    videos.forEach((video) => {
-      video.play().catch(() => {});
-    });
+  // Play main immediately, stagger subs by 200ms each
+  if (main) main.play().catch(() => {});
+  const subs = all.filter(v => !v.classList.contains("video-main"));
+  subs.forEach((v, i) => {
+    setTimeout(() => v.play().catch(() => {}), 200 + i * 200);
   });
 }
 
