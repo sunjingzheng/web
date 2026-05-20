@@ -514,13 +514,13 @@ const resultImages = [
     src: "/second/one.png",
     label: "工况 A · Surge 通道残差降低",
     desc: "DOB 残差减少率（Surge 通道）各模型对比，CNN 在 A2/B1 工况表现最优。",
-    legend: "/second/柱状图颜色参考.png",
+    legend: "/second/bar-legend.png",
   },
   {
     src: "/second/two.png",
     label: "工况 B · Yaw 通道残差降低",
     desc: "DOB 残差减少率（Yaw 通道）各模型跨工况对比，整体改善稳定可靠。",
-    legend: "/second/柱状图颜色参考.png",
+    legend: "/second/bar-legend.png",
   },
   {
     src: "/second/three.png",

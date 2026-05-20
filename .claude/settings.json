@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/mac/Projects/web/smart-usv/public/second && mv \"柱状图颜色参考.png\" \"bar-legend.png\" && ls bar-legend.png)"
+    ],
+    "additionalDirectories": [
+      "/Users/mac/Projects/web/smart-usv/public/second"
+    ]
+  }
+}
