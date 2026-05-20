@@ -4,7 +4,8 @@
       "Bash(cd /Users/mac/Projects/web/smart-usv/public/second && mv \"柱状图颜色参考.png\" \"bar-legend.png\" && ls bar-legend.png)",
       "Bash(ffprobe -v error -select_streams v:0 -show_entries stream=width,height,bit_rate -of csv=p=0 /Users/mac/Projects/web/smart-usv/public/main/USV_A1.mp4)",
       "Bash(mv /Users/mac/Projects/web/smart-usv/public/main/compressed/*.mp4 /Users/mac/Projects/web/smart-usv/public/main/)",
-      "Bash(rmdir /Users/mac/Projects/web/smart-usv/public/main/compressed)"
+      "Bash(rmdir /Users/mac/Projects/web/smart-usv/public/main/compressed)",
+      "Bash(ffprobe -v error -select_streams v:0 -show_entries stream=width,height,bit_rate -of csv=p=0 /Users/mac/Projects/web/smart-usv/public/other/x_error_A1.mp4)"
     ],
     "additionalDirectories": [
       "/Users/mac/Projects/web/smart-usv/public/second"

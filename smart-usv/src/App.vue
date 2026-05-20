@@ -73,37 +73,37 @@ const scenarioVideoMap = {
   A1: {
     main: "/main/USV_A1.mp4",
     subs: [
-      "/other/tau_r_A1.mp4",
-      "/other/tau_u_A1.mp4",
-      "/other/x_error_A1.mp4",
-      "/other/y_error_A1.mp4",
+      "/other/tau_r_A1.webm",
+      "/other/tau_u_A1.webm",
+      "/other/x_error_A1.webm",
+      "/other/y_error_A1.webm",
     ],
   },
   A2: {
     main: "/main/USV_A2.mp4",
     subs: [
-      "/other/tau_r_A2.mp4",
-      "/other/tau_u_A2.mp4",
-      "/other/x_error_A2.mp4",
-      "/other/y_error_A2.mp4",
+      "/other/tau_r_A2.webm",
+      "/other/tau_u_A2.webm",
+      "/other/x_error_A2.webm",
+      "/other/y_error_A2.webm",
     ],
   },
   B1: {
     main: "/main/USV_B1.mp4",
     subs: [
-      "/other/tau_r_B1.mp4",
-      "/other/tau_u_B1.mp4",
-      "/other/x_error_B1.mp4",
-      "/other/y_error_B1.mp4",
+      "/other/tau_r_B1.webm",
+      "/other/tau_u_B1.webm",
+      "/other/x_error_B1.webm",
+      "/other/y_error_B1.webm",
     ],
   },
   B2: {
     main: "/main/USV_B2.mp4",
     subs: [
-      "/other/tau_r_B2.mp4",
-      "/other/tau_u_B2.mp4",
-      "/other/x_error_B2.mp4",
-      "/other/y_error_B2.mp4",
+      "/other/tau_r_B2.webm",
+      "/other/tau_u_B2.webm",
+      "/other/x_error_B2.webm",
+      "/other/y_error_B2.webm",
     ],
   },
 };
@@ -135,11 +135,13 @@ function isCustomScenario(inputs) {
   return val !== "" && val !== "1.5" && val !== "0.7";
 }
 
-function renderVideo(src) {
+function renderVideo(src, isMain = false) {
+  const isWebM = src.endsWith('.webm')
+  const mime = isWebM ? 'video/webm' : 'video/mp4'
   return `
-    <video class="auto-video" muted loop playsinline preload="auto"
+    <video class="auto-video${isMain ? ' video-main' : ''}" muted loop playsinline preload="auto"
            disablepictureinpicture controlslist="nodownload noplaybackrate nofullscreen noremoteplayback">
-      <source src="${src}" type="video/mp4" />
+      <source src="${src}" type="${mime}" />
     </video>
   `;
 }
@@ -154,7 +156,7 @@ function renderResultFrame(src, caption, isLarge = false) {
     <div class="result-card ${sizeClass}">
       <div class="result-video-wrap">
         <div class="hud"></div>
-        ${renderVideo(src)}
+        ${renderVideo(src, isLarge)}
       </div>
       <div class="result-caption">${caption}</div>
     </div>
@@ -187,19 +189,14 @@ function attachResultSwapInteraction() {
 function syncAndPlayVideos() {
   const videos = Array.from(document.querySelectorAll(".auto-video"));
   videos.forEach((video) => {
-    try {
-      video.pause();
-      video.currentTime = 0;
-    } catch (e) {}
+    try { video.pause(); video.currentTime = 0; } catch (e) {}
     video.defaultMuted = true;
     video.muted = true;
   });
 
   requestAnimationFrame(() => {
     videos.forEach((video) => {
-      const playPromise = video.play();
-      if (playPromise && typeof playPromise.catch === "function")
-        playPromise.catch(() => {});
+      video.play().catch(() => {});
     });
   });
 }
