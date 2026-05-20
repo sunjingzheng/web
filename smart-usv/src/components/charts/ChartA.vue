@@ -92,8 +92,8 @@ function render() {
         barGap: '20%',
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(164,196,255,0.9)' },
-            { offset: 1, color: 'rgba(99,152,255,0.5)' },
+            { offset: 0, color: 'rgba(148,163,184,0.85)' },
+            { offset: 1, color: 'rgba(100,116,139,0.45)' },
           ]),
           borderRadius: [6, 6, 0, 0],
         },

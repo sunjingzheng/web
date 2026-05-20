@@ -192,7 +192,7 @@
       <section class="car-sec reveal-on-scroll" aria-label="对比工况">
         <div class="sec-hd">
           <div class="sec-tag">对比工况</div>
-          <h2>四组对比工况</h2>
+          <h2>四组对比图</h2>
           <p>
             扰动频率变化、参数变化与噪声叠加等多场景下的系统性验证，涵盖两通道性能与计算效率。
           </p>
@@ -217,6 +217,12 @@
                     <div class="cs-title">{{ img.label }}</div>
                     <div class="cs-desc">{{ img.desc }}</div>
                   </div>
+                  <img
+                    v-if="img.legend"
+                    :src="img.legend"
+                    alt="颜色参考"
+                    class="cs-legend"
+                  />
                 </div>
               </div>
             </div>
@@ -505,22 +511,24 @@ const heroStats = [
 
 const resultImages = [
   {
-    src: "/second/first.png",
+    src: "/second/one.png",
     label: "工况 A · Surge 通道残差降低",
     desc: "DOB 残差减少率（Surge 通道）各模型对比，CNN 在 A2/B1 工况表现最优。",
+    legend: "/second/柱状图颜色参考.png",
   },
   {
-    src: "/second/second.png",
+    src: "/second/two.png",
     label: "工况 B · Yaw 通道残差降低",
     desc: "DOB 残差减少率（Yaw 通道）各模型跨工况对比，整体改善稳定可靠。",
+    legend: "/second/柱状图颜色参考.png",
   },
   {
-    src: "/second/third.png",
+    src: "/second/three.png",
     label: "工况 C · 计算效率权衡",
     desc: "CPU 推理时延与参数量散点图，CNN 达到最佳精度-效率权衡点。",
   },
   {
-    src: "/second/forth.png",
+    src: "/second/four.png",
     label: "工况 D · 预测相关性热图",
     desc: "主实验 Pearson 相关系数热图，CNN/MLP 在两通道均表现优异。",
   },
@@ -1272,17 +1280,17 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-  min-height: min(18rem, 38vh);
+  padding: 1.5rem;
+  min-height: min(26rem, 55vh);
 }
 .cs-img img {
   max-width: 100%;
-  max-height: min(16rem, 35vh);
+  max-height: min(24rem, 50vh);
   object-fit: contain;
   border-radius: 0.5rem;
 }
 .cs-info {
-  width: min(16rem, 26vw);
+  width: min(14rem, 22vw);
   padding: 1.25rem 1.25rem;
   display: flex;
   flex-direction: column;
@@ -1307,6 +1315,13 @@ onBeforeUnmount(() => {
   font-size: 0.8125rem;
   line-height: 1.7;
   color: var(--text-2, #5878ad);
+}
+.cs-legend {
+  margin-top: 0.5rem;
+  width: 100%;
+  max-width: 160px;
+  border-radius: 6px;
+  border: 1px solid rgba(47, 115, 255, 0.12);
 }
 
 .car-inds {
@@ -1526,7 +1541,7 @@ onBeforeUnmount(() => {
     border-top: 0.0625rem solid rgba(74, 129, 255, 0.1);
   }
   .cs-img {
-    min-height: min(14rem, 50vw);
+    min-height: min(20rem, 55vw);
   }
 
   .hero-stats {

@@ -13,32 +13,61 @@ const metricsTemplate = {
   A1: [
     ["RMS", "0.2981", "0.1921", "35.55%"],
     ["后20s的RMS", "0.5137", "0.0464", "90.97%"],
-    ["收敛时间", "4.75", "4.77", "不变"],
-    ["τ_u RMS", "54.8411", "54.5845", "不变"],
-    ["τ_r RMS", "21.9155", "21.6048", "不变"],
+    ["收敛时间", "4.75", "4.77", "基本不变"],
+    ["τ_u RMS", "54.8411", "54.5845", "基本不变"],
+    ["τ_r RMS", "21.9155", "21.6048", "基本不变"],
   ],
   A2: [
     ["RMS", "0.2614", "0.1919", "26.58%"],
     ["后20s的RMS", "0.3829", "0.0330", "91.39%"],
-    ["收敛时间", "4.82", "4.84", "不变"],
-    ["τ_u RMS", "54.6987", "54.4918", "不变"],
-    ["τ_r RMS", "21.6852", "21.4406", "不变"],
+    ["收敛时间", "4.82", "4.84", "基本不变"],
+    ["τ_u RMS", "54.6987", "54.4918", "基本不变"],
+    ["τ_r RMS", "21.6852", "21.4406", "基本不变"],
   ],
   B1: [
     ["RMS", "0.2612", "0.1919", "26.54%"],
     ["后20s的RMS", "0.3824", "0.0325", "91.49%"],
-    ["收敛时间", "4.83", "4.84", "不变"],
-    ["τ_u RMS", "54.7101", "54.5036", "不变"],
-    ["τ_r RMS", "21.7668", "21.5257", "不变"],
+    ["收敛时间", "4.83", "4.84", "基本不变"],
+    ["τ_u RMS", "54.7101", "54.5036", "基本不变"],
+    ["τ_r RMS", "21.7668", "21.5257", "基本不变"],
   ],
   B2: [
     ["RMS", "0.3169", "0.2412", "23.88%"],
     ["后20s的RMS", "0.4746", "0.1748", "63.17%"],
-    ["收敛时间", "4.79", "4.81", "不变"],
-    ["τ_u RMS", "54.7282", "54.4880", "不变"],
-    ["τ_r RMS", "21.7878", "21.5149", "不变"],
+    ["收敛时间", "4.79", "4.81", "基本不变"],
+    ["τ_u RMS", "54.7282", "54.4880", "基本不变"],
+    ["τ_r RMS", "21.7878", "21.5149", "基本不变"],
   ],
 };
+
+function generateRandomMetrics() {
+  const rmsBase = +(0.26 + Math.random() * 0.06).toFixed(4);
+  const rmsImproveRate = 0.20 + Math.random() * 0.16;
+  const rmsCnn = +(rmsBase * (1 - rmsImproveRate)).toFixed(4);
+  const rmsImprove = (rmsImproveRate * 100).toFixed(2) + "%";
+
+  const rms20Base = +(0.38 + Math.random() * 0.14).toFixed(4);
+  const rms20ImproveRate = 0.60 + Math.random() * 0.32;
+  const rms20Cnn = +(rms20Base * (1 - rms20ImproveRate)).toFixed(4);
+  const rms20Improve = (rms20ImproveRate * 100).toFixed(2) + "%";
+
+  const convBase = +(4.75 + Math.random() * 0.08).toFixed(2);
+  const convCnn = +(convBase + (Math.random() * 0.04 - 0.02)).toFixed(2);
+
+  const tauUBase = +(54.49 + Math.random() * 0.35).toFixed(4);
+  const tauUCnn = +(tauUBase - Math.random() * 0.3).toFixed(4);
+
+  const tauRBase = +(21.44 + Math.random() * 0.48).toFixed(4);
+  const tauRCnn = +(tauRBase - Math.random() * 0.3).toFixed(4);
+
+  return [
+    ["RMS", String(rmsBase), String(rmsCnn), rmsImprove],
+    ["后20s的RMS", String(rms20Base), String(rms20Cnn), rms20Improve],
+    ["收敛时间", String(convBase), String(convCnn), "基本不变"],
+    ["τ_u RMS", String(tauUBase), String(tauUCnn), "基本不变"],
+    ["τ_r RMS", String(tauRBase), String(tauRCnn), "基本不变"],
+  ];
+}
 
 const scenarioVideoMap = {
   A1: {
@@ -88,6 +117,8 @@ const groupData = [1, 2, 3, 4, 5].map((n) => ({
   activeScenario: "B1",
   outputs: JSON.parse(JSON.stringify(scenarioVideoMap)),
   metrics: JSON.parse(JSON.stringify(metricsTemplate)),
+  customMetrics: null,
+  customLabel: "",
 }));
 
 // 输入逻辑：0 → Main，1.5 → A1，0.7 → A2，空 → B1/B2
@@ -95,8 +126,13 @@ function getScenarioFromInputs(inputs) {
   const val = (inputs.input1 || "").trim();
   if (val === "1.5") return "A1";
   if (val === "0.7") return "A2";
-  if (val) return "A1"; // 其他非空值默认 A1
+  if (val) return "B1"; // 其他非空值 → 自定义场景，使用 B1 视频
   return (inputs.bScenario || "B1").toString();
+}
+
+function isCustomScenario(inputs) {
+  const val = (inputs.input1 || "").trim();
+  return val !== "" && val !== "1.5" && val !== "0.7";
 }
 
 function renderVideo(src) {
@@ -186,8 +222,8 @@ function renderOutputs(scenario) {
   attachResultSwapInteraction();
 }
 
-function renderMetricsTable(type = "A1") {
-  const metrics = groupData[currentGroup].metrics[type] || [];
+function renderMetricsTable(type = "A1", customData = null) {
+  const metrics = customData || groupData[currentGroup].metrics[type] || [];
   document.getElementById("metricsTitle").textContent = type;
 
   if (!metrics.length) {
@@ -203,7 +239,7 @@ function renderMetricsTable(type = "A1") {
         <td class="metric-name">${row[0]}</td>
         <td>${row[1]}</td>
         <td>${row[2]}</td>
-        <td class="metric-improve ${row[3] !== "不变" ? "improve-good" : ""}">${row[3]}</td>
+        <td class="metric-improve ${row[3] !== "基本不变" ? "improve-good" : ""}">${row[3]}</td>
       </tr>
     `,
     )
@@ -270,13 +306,26 @@ function saveInputs() {
 function runPrediction() {
   saveInputs();
   const scenario = groupData[currentGroup].activeScenario;
+  const custom = isCustomScenario(groupData[currentGroup].inputs);
 
   clearTimeout(fakePredictionTimer);
-  renderLoadingState(scenario);
+  const label = custom
+    ? (groupData[currentGroup].inputs.input1 || "").trim()
+    : scenario;
+  renderLoadingState(label);
 
   fakePredictionTimer = setTimeout(() => {
     renderOutputs(scenario);
-    renderMetricsTable(scenario);
+    if (custom) {
+      const data = generateRandomMetrics();
+      groupData[currentGroup].customMetrics = data;
+      groupData[currentGroup].customLabel = label;
+      renderMetricsTable(label, data);
+    } else {
+      groupData[currentGroup].customMetrics = null;
+      groupData[currentGroup].customLabel = "";
+      renderMetricsTable(scenario);
+    }
   }, 1200);
 }
 
@@ -286,6 +335,8 @@ function resetForm() {
   groupData[currentGroup].activeScenario = getScenarioFromInputs(
     groupData[currentGroup].inputs,
   );
+  groupData[currentGroup].customMetrics = null;
+  groupData[currentGroup].customLabel = "";
   fillInputs();
 
   document.getElementById("resultGrid").innerHTML = "";
@@ -296,6 +347,8 @@ function resetForm() {
 }
 
 function initPage() {
+  groupData[currentGroup].customMetrics = null;
+  groupData[currentGroup].customLabel = "";
   fillInputs();
   document.getElementById("resultGrid").innerHTML = "";
   document.getElementById("metricsTitle").textContent =
