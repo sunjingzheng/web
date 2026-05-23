@@ -307,11 +307,20 @@ function runPrediction() {
   saveInputs();
   const scenario = groupData[currentGroup].activeScenario;
   const custom = isCustomScenario(groupData[currentGroup].inputs);
+  const rawVal = (groupData[currentGroup].inputs.input1 || "").trim();
 
   clearTimeout(fakePredictionTimer);
-  const label = custom
-    ? (groupData[currentGroup].inputs.input1 || "").trim()
-    : scenario;
+
+  // 只有 0-30 之间的数才正常返回，否则一直加载
+  if (rawVal !== "") {
+    const num = Number(rawVal);
+    if (isNaN(num) || num < 0 || num > 30) {
+      renderLoadingState(rawVal);
+      return;
+    }
+  }
+
+  const label = custom ? rawVal : scenario;
   renderLoadingState(label);
 
   fakePredictionTimer = setTimeout(() => {
